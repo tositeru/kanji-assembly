@@ -1,6 +1,6 @@
-const pkg = require('./package')
 const fs = require('fs')
 const path = require('path')
+const pkg = require('./package')
 
 module.exports = {
   mode: 'universal',
@@ -41,6 +41,7 @@ module.exports = {
     '@nuxtjs/axios',
     // Doc:https://github.com/nuxt-community/modules/tree/master/packages/bulma
     '@nuxtjs/bulma',
+    '@nuxtjs/vuetify',
     '@nuxtjs/pwa'
   ],
   /*
@@ -68,25 +69,29 @@ module.exports = {
       // Run ESLint on save
       if (ctx.isDev && ctx.isClient) {
         config.mode = 'development'
-        config.module.rules.push({
-          enforce: 'pre',
-          test: /\.(js|vue)$/,
-          loader: 'eslint-loader',
-          exclude: /(node_modules)/
-        })
+        // config.module.rules.push({
+        //   enforce: 'pre',
+        //   test: /\.(js|vue)$/,
+        //   loader: 'eslint-loader',
+        //   exclude: /(node_modules)/,
+        //   options: {
+        //     fix: true,
+        //   },
+        // })
       }
     }
   },
 
   server: {
+    host: '0.0.0.0',
     https: {
       key: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.key')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt')),
+      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
     }
   },
   serverMiddleware: [
-    "redirect-ssl",
-    "~/server/app/app.js",
-    //"~/app/index.js",
-  ],
+    'redirect-ssl',
+    '~/server/app/app.js'
+    // "~/app/index.js",
+  ]
 }

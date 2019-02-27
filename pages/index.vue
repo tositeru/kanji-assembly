@@ -1,68 +1,59 @@
-<template>
-  <section class="container">
-    <div>
-      <logo />
-      <h1 class="title">
-        kanji-assembly
-      </h1>
-      <h2 class="subtitle">
-        web site of the Kanji assembly puzzle
-      </h2>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          class="button--green"
-        >Documentation</a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          class="button--grey"
-        >GitHub</a>
-      </div>
-    </div>
-  </section>
+<template lang=pug>
+  section(class="background")
+    h1 漢字組み立てパズル
+      div(class="login") ログイン/サインイン
+    div(class="Ad") 広告スペース
+    question(title="今日の問題")
+    v-footer(height="auto" class="cyan cyan--text text--lighten-5")
+      v-layout(justify-center row wrap)
+        v-tabs(fixed-tabs dark color="cyan" show-arrows class="bottom-menu")
+          v-tabs-slider(color="yellow")
+          v-tab(v-for="(menu, i) in menus" :key="i" :to="menu.link" class="menu-item") {{ menu.name }}
+        v-flex(primary py-3 text-xs-center xs12)
+          | 2019 tositeru
 </template>
 
 <script>
-import Logo from '~/components/Logo.vue'
-
 export default {
   components: {
-    Logo
-  }
+    question: () => import('~/components/question/index.vue')
+  },
+  data() {
+    return {
+      menus: [
+        { name: 'サイトについて', link: '#' },
+        { name: '統計', link: '#' },
+        { name: '問題一覧', link: '#' }
+      ]
+    }
+  },
+  methods: {}
 }
 </script>
 
-<style>
-.container {
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
+<style lang="scss" scoped>
+.background {
+  width: 100vw;
+  height: 100vh;
 
-.title {
-  font-family: 'Quicksand', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
-}
+  h1 {
+    margin: 0px auto;
+    font-size: 72px;
+    text-align: center;
+    .login {
+      font-size: 32px;
+      text-align: right;
+      margin-right: 10%;
+    }
+  }
 
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
-}
+  .Ad {
+  }
 
-.links {
-  padding-top: 15px;
+  .bottom-menu {
+    width: 100%;
+    // position: absolute;
+    // bottom: 0px;
+  }
 }
 </style>
