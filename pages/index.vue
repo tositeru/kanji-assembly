@@ -1,8 +1,10 @@
 <template lang=pug>
-  section()
-    h1(class="display-4 text-xs-center") 漢字組み立てパズル
+  v-container(fluid)
+    h1(class="display-3 text-xs-center") 漢字組み立てパズル
       div(class="login")
-        n-link(to='/login') ログイン/サインイン
+        n-link(to='/login') ログイン
+        | /
+        n-link(to='/signup') サインアップ
     div(class="Ad") 広告スペース
     question(title="今日の問題")
 </template>

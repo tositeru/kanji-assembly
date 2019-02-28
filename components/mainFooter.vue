@@ -13,7 +13,7 @@ export default {
   data() {
     return {
       menus: [
-        { name: 'サイトについて', link: '#' },
+        { name: 'サイトについて', link: '/about' },
         { name: '統計', link: '#' },
         { name: '問題一覧', link: '#' }
       ]
