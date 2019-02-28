@@ -14,7 +14,7 @@ export default {
     return {
       menus: [
         { name: 'サイトについて', link: '/about' },
-        { name: '統計', link: '#' },
+        { name: 'ユーザー', link: '/user' },
         { name: '問題一覧', link: '#' }
       ]
     }
