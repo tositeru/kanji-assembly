@@ -1,6 +1,6 @@
-<template lang="pug">
-  div(class="background")
-    nuxt()
+<template lang=pug>
+  v-app(class="background")
+    nuxt
     main-footer()
 </template>
 <script>
