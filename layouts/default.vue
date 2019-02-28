@@ -1,10 +1,22 @@
-<template>
-  <div>
-    <nuxt />
-  </div>
+<template lang="pug">
+  div(class="background")
+    nuxt()
+    main-footer()
 </template>
+<script>
+export default {
+  components: {
+    'main-footer': () => import('~/components/mainFooter.vue')
+  }
+}
+</script>
 
 <style>
+.background {
+  width: 100vw;
+  height: 100vh;
+}
+
 html {
   font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, 'Helvetica Neue', Arial, sans-serif;
