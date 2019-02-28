@@ -1,8 +1,7 @@
 <template lang="pug">
   v-container()
     v-layout()
-      v-hover
-        h1(class="display-3" slot-scope="{ hover }" :class="`elevation-${hover ? 2 : 0}`") 漢字組み立てパズル
+      g-title()
     v-layout()
       v-card(flat class="elevation-3")
         v-card-title() {{ user.name }}さんのページ
@@ -10,17 +9,18 @@
         v-card-actions()
           v-btn(@click="doEdit = !doEdit") 編集
           v-dialog(v-model="doEdit" persistent max-width="60%")
-            v-card
-              v-card-title 編集
-              v-card-text
-                v-text-field(v-model="user.name" label="名前" type="text" :rules="[rules.required]")
-                v-text-field(v-model="user.password" label="パスワード" :type="showPassword1 ? 'text' : 'password'"
-                  :append-icon="showPassword1 ? 'visibility_off' : 'visibility'" @click:append="showPassword1 = !showPassword1"
-                  :rules="[rules.required, rules.min]" counter)
-              v-card-actions
-                v-spacer
-                v-btn(color="blue darken-1" flat @click="doEdit = false") Close
-                v-btn(color="blue darken-1" flat @click="save()") Save
+            v-form
+              v-card
+                v-card-title 編集
+                v-card-text
+                  v-text-field(v-model="user.name" label="名前" type="text" :rules="[rules.required]")
+                  v-text-field(v-model="user.password" label="パスワード" :type="showPassword1 ? 'text' : 'password'"
+                    :append-icon="showPassword1 ? 'visibility_off' : 'visibility'" @click:append="showPassword1 = !showPassword1"
+                    :rules="[rules.required, rules.min]" counter)
+                v-card-actions
+                  v-spacer
+                  v-btn(color="blue darken-1" flat @click="doEdit = false") Close
+                  v-btn(color="blue darken-1" flat @click="save()") Save
 </template>
 
 <script>
