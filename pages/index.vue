@@ -16,7 +16,7 @@
 <script>
 export default {
   components: {
-    question: () => import('~/components/question/index.vue')
+    question: () => import('~/components/question/question.vue')
   },
   data() {
     return {
