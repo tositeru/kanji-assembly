@@ -1,7 +1,7 @@
 <template lang="pug">
   v-container()
     v-layout()
-      h1(class="display-3" @click="goToTopPage()") 漢字組み立てパズル
+      g-title()
     div(class="elevation-3")
       v-tabs(color="cyan" dark slider-color="yellow")
         v-tab(v-for="(tab, i) in tabList" :key="i" ripple) {{ tab.name }}
@@ -39,11 +39,6 @@ export default {
         ),
         new Tab('製作者について', '作者についての情報')
       ]
-    }
-  },
-  methods: {
-    goToTopPage() {
-      this.$router.push('/')
     }
   }
 }

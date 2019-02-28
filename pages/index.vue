@@ -1,6 +1,6 @@
 <template lang=pug>
   v-container(fluid)
-    h1(class="display-3 text-xs-center") 漢字組み立てパズル
+    g-title(class="text-xs-center")
       div(class="login")
         n-link(to='/login') ログイン
         | /

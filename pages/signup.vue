@@ -1,6 +1,6 @@
 <template lang="pug">
-  section()
-    h1(class="display-4 text-xs-center" @click="goToTopPage()") 漢字組み立てパズル
+  v-container()
+    g-title(class="text-xs-center")
     v-form(v-model="loginInfo.valid")
       v-container(class="elevation-8")
         v-layout()
@@ -41,9 +41,6 @@ export default {
   methods: {
     send() {
       alert('please implement')
-    },
-    goToTopPage() {
-      this.$router.push('/')
     }
   }
 }
