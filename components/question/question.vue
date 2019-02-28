@@ -14,7 +14,8 @@ export default {
     loading: () => import('./loading.vue'),
     'main-form': () => import('./mainForm.vue'),
     juding: () => import('./judging.vue'),
-    result: () => import('./result.vue')
+    result: () => import('./result.vue'),
+    hint: () => import('./hint.vue')
   },
   props: {
     title: { type: String, default: '問題' }
