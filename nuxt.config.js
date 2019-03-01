@@ -31,7 +31,7 @@ module.exports = {
   /*
   ** Plugins to load before mounting the App
   */
-  plugins: [],
+  plugins: ['~/plugins/setup.js'],
 
   /*
   ** Nuxt.js modules
@@ -49,6 +49,15 @@ module.exports = {
   */
   axios: {
     // See https://github.com/nuxt-community/axios-module#options
+  },
+
+  router: {
+    extendRoutes(routes, resolve) {
+      routes.push({
+        path: '*',
+        redirect: '/'
+      })
+    }
   },
 
   /*
@@ -83,7 +92,7 @@ module.exports = {
   },
 
   server: {
-    host: '0.0.0.0',
+    host: 'localhost',
     https: {
       key: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.key')),
       cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))

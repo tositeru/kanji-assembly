@@ -1,9 +1,9 @@
-<template lang=pug>
+<template lang="pug">
   div()
     v-layout(justify-space-between)
       v-flex(grow) {{ question.description }}
       v-flex(shrink)
-        v-btn(class="hint-button") 助言
+        v-btn(class="hint-button" @click="goToHint()") 助言
     v-sheet(color="grey lighten-3" height="50vh" style="overflow:scroll;")
       v-layout(class="strokes" align-center justify-space-around row fill-height wrap)
         div(v-for="(stroke, i) in question.strokes" :key="i" class="stroke elevation-2" :style="`background-image: url('./strokes/${stroke.kind}');`")
@@ -60,6 +60,9 @@ export default {
     }
   },
   methods: {
+    goToHint() {
+      this.$emit('change-status', STATUS.HINT)
+    },
     sendAnswer() {
       this.$emit('change-status', STATUS.JUDGING)
     },
