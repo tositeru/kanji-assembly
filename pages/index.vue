@@ -1,4 +1,4 @@
-<template lang=pug>
+<template lang="pug">
   v-container(fluid)
     g-title(class="text-xs-center")
       div(class="login")
