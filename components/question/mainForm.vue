@@ -1,4 +1,4 @@
-<template lang=pug>
+<template lang="pug">
   div()
     v-layout(justify-space-between)
       v-flex(grow) {{ question.description }}
