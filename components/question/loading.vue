@@ -2,7 +2,10 @@
   v-layout()
     v-flex(grop)
       v-sheet(color="grey lighten-3" height="50vh")
-        | 読み込み中
+        v-flex(v-if="!error")
+          v-progress-circular(indeterminate color="primary")
+        v-flex(v-else)
+          | {{error}}
 </template>
 
 <script>
@@ -10,12 +13,20 @@ import { STATUS } from './common'
 
 export default {
   data() {
-    return {}
+    return {
+      error: false
+    }
   },
-  created() {
-    setTimeout(() => {
+  async created() {
+    try {
+      await this.$store.dispatch('question/query', {
+        date: '2019-03-01',
+        date_id: 0
+      })
       this.$emit('change-status', STATUS.MAIN)
-    }, 1000)
+    } catch (e) {
+      this.error = e
+    }
   }
 }
 </script>
