@@ -12,7 +12,10 @@
     "generate": "nuxt generate",
     "precommit": "npm run lint",
     "start": "cross-env NODE_ENV=production node server/index.js",
-    "test:update-snapshots": "ava --update-snapshots"
+    "test:update-snapshots": "ava --update-snapshots",
+    "open-database": "sqlite3 db/database.db",
+    "db:create-model": "node_modules/.bin/sequelize model:create",
+    "db:create-migration": "node_modules/.bin/sequelize migration:create"
   },
   "dependencies": {
     "@nuxtjs/axios": "^5.3.6",
@@ -23,6 +26,7 @@
     "cross-env": "^5.2.0",
     "express": "^4.16.4",
     "express-session": "^1.15.6",
+    "moment": "^2.24.0",
     "nuxt": "^2.4.0",
     "path": "^0.12.7",
     "sequelize": "^4.42.0",
@@ -57,6 +61,7 @@
     "require-extension-hooks-babel": "^0.1.1",
     "require-extension-hooks-vue": "^2.0.0",
     "sass-loader": "^7.1.0",
+    "sequelize-cli": "^5.4.0",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.1",
     "vue-cli-plugin-vuetify": "^0.4.6",
