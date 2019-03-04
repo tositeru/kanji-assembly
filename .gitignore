@@ -85,3 +85,4 @@ sw.*
 
 ssl/
 *.db
+db/test.js

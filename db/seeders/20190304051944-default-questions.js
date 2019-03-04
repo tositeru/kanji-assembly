@@ -10,18 +10,25 @@ function appendTimestamp(obj) {
 
 function createQuestion(queryInterface, info, typeInfos, hints) {
   const appendQuestionId = (questionId, infos) => {
-    for (const info of infos) {
-      info.question_id = questionId
-      appendTimestamp(info)
+    if (infos instanceof Array) {
+      for (const info of infos) {
+        info.question_id = questionId
+        appendTimestamp(info)
+      }
+    } else {
+      infos.question_id = questionId
+      appendTimestamp(infos)
     }
   }
   return queryInterface
     .bulkInsert('Questions', [appendTimestamp(info)])
     .then(questionId => {
       appendQuestionId(questionId, typeInfos)
-      return queryInterface.bulkInsert('QuestionType1s', typeInfos).then(() => {
-        return questionId
-      })
+      return queryInterface
+        .bulkInsert('QuestionType1s', [typeInfos])
+        .then(() => {
+          return questionId
+        })
     })
     .then(questionId => {
       appendQuestionId(questionId, hints)
@@ -29,34 +36,56 @@ function createQuestion(queryInterface, info, typeInfos, hints) {
     })
 }
 
+function makeQuestion(date, dateId, type) {
+  return {
+    show_date: moment(date).toISOString(),
+    date_id: dateId,
+    type: type
+  }
+}
+
+function makeQuestionType1(description, answers) {
+  return {
+    description: description,
+    answers: answers
+  }
+}
+
+function makeHintsData(text, count) {
+  const hints = []
+  for (let i = 0; i < count; ++i) {
+    hints.push({
+      level: i,
+      text: `${text}: ${i + 1}`
+    })
+  }
+  return hints
+}
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    const t = moment('2019-03-01 00Z')
     return createQuestion(
       queryInterface,
-      {
-        show_date: t.toISOString(),
-        date_id: 0,
-        type: 1
-      },
-      [
-        {
-          description: "Q1's descriptions",
-          answers: '木'
-        }
-      ],
-      [
-        {
-          text: 'hint 1!!'
-        },
-        {
-          text: 'hint 2!!'
-        },
-        {
-          text: 'hint 3!!'
-        }
-      ]
+      makeQuestion('2019-03-01 00Z', 0, 1),
+      makeQuestionType1("Q1's descriptions", '木'),
+      makeHintsData('first question', 3)
     )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion('2019-03-02 00Z', 0, 1),
+          makeQuestionType1("Q2's descriptions", '水'),
+          makeHintsData('second question', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion('2019-03-03 00Z', 0, 1),
+          makeQuestionType1("Q3's descriptions", '火'),
+          makeHintsData('third question', 3)
+        )
+      )
   },
 
   down: (queryInterface, Sequelize) => {

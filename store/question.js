@@ -21,9 +21,12 @@ export const mutations = {
     state.currentQuestion.lines = question.lines
     state.currentQuestion.hints = question.hints
   },
-  setHintText(state, { id, text }) {
-    state.currentQuestion.hints[id].opened = true
-    state.currentQuestion.hints[id].text = text
+  setHintText(state, { level, text }) {
+    const hint = state.currentQuestion.hints.find(hint => hint.level === level)
+    if (hint) {
+      hint.opened = true
+      hint.text = text
+    }
   },
   setAnswers(state, answers) {
     state.answers = answers
@@ -36,11 +39,11 @@ export const mutations = {
 function makeQuestionParam(date, dateId) {
   return {
     date: date,
-    dateId: dateId
+    date_id: dateId
   }
 }
 function makeParam(question) {
-  return makeQuestionParam(question.date, question.dateId)
+  return makeQuestionParam(question.date, question.date_id)
 }
 
 export const actions = {
@@ -48,6 +51,9 @@ export const actions = {
   async query({ commit }, { date, dateId }) {
     const param = makeQuestionParam(date, dateId)
     const res = await axios.post('/Q', param)
+    if (res.data === 'Bad') {
+      return null
+    }
     commit('set', res.data)
     return res.data
   },
@@ -68,22 +74,23 @@ export const actions = {
   },
 
   // ヒントパネルを開ける事をサーバーに告げる
-  async openHint({ state, commit }, hintId) {
+  async openHint({ state, commit }, hintLevel) {
     if (!state.currentQuestion) {
       return false
     }
     const Q = state.currentQuestion
-    if (hintId < 0 || hintId >= Q.hints.length) {
+    if (!Q.hints.find(hint => hint.level === hintLevel)) {
       return false
     }
 
-    const param = makeParam(Q)
-    param.hintId = hintId
-    const res = await axios.post('/Q/openHint', param)
-    if (res.status === 200) {
-      commit('setHintText', { id: hintId, text: res.data })
+    try {
+      const param = makeParam(Q)
+      param.hintLevel = hintLevel
+      const res = await axios.post('/Q/openHint', param)
+      commit('setHintText', { level: hintLevel, text: res.data })
       return res.data
+    } catch (err) {
+      return false
     }
-    return false
   }
 }

@@ -15,7 +15,8 @@
     "test:update-snapshots": "ava --update-snapshots",
     "open-database": "sqlite3 db/database.db",
     "db:create-model": "node_modules/.bin/sequelize model:create",
-    "db:create-migration": "node_modules/.bin/sequelize migration:create"
+    "db:create-migration": "node_modules/.bin/sequelize migration:create",
+    "db:remake-seed": "node_modules/.bin/sequelize db:seed:undo:all && node_modules/.bin/sequelize db:seed:all"
   },
   "dependencies": {
     "@nuxtjs/axios": "^5.3.6",
