@@ -2,6 +2,13 @@
 
 > web site of the Kanji assembly puzzle
 
+
+## Kanji Strokes
+
+Kanji stroke follow to CJK Strokes in Unicode below the url.
+
+https://www.unicode.org/Public/UCD/latest/charts/CodeCharts.pdf
+
 ## Build Setup
 
 ``` bash

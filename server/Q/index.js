@@ -1,5 +1,20 @@
 const express = require('express')
+const Sequelize = require('sequelize')
 const utils = require('../utils.js')
+
+const sequelize = new Sequelize({
+  username: 'wciantd',
+  database: 'database_development',
+  dialect: 'sqlite',
+  storage: 'db/database.db',
+  operatorsAliases: false
+})
+
+const Questions = sequelize.import('../../db/models/questions.js')
+const QuestionType1 = sequelize.import('../../db/models/questiontype1.js')
+const Hints = sequelize.import('../../db/models/hints.js')
+const KanjiStrokes = sequelize.import('../../db/models/kanjistrokes.js')
+
 // import { resolve } from 'dns'
 
 const router = express.Router()
@@ -12,27 +27,72 @@ router.use((req, res, next) => {
   next()
 })
 
-router.post('/', function(req, res) {
+router.post('/', async function(req, res) {
   // TODO Query Database
+  const Q = await Questions.getByDate(req.body.date, req.body.dateId)
+  if (!Q) {
+    return res.send('Bad')
+  }
+  const QBody = await QuestionType1.findOne({
+    where: {
+      question_id: Q.id
+    }
+  })
+  const hints = await Hints.getByQuestionId(Q.id)
+
+  const kanji = '金' || QBody.answers[0]
+  const strokes = await KanjiStrokes.getByKanji(kanji)
   const question = {
     corrected: false,
     date: req.body.date,
-    dateId: req.body.dateId,
-    description: 'test description',
-    lines: [{ kind: 'stroke04.gif', count: 1 }],
-    hints: [{ text: '', opened: false }]
+    date_id: req.body.date_id,
+    description: QBody.description,
+    lines: [],
+    hints: []
+  }
+  for (const stroke of strokes) {
+    const index = question.lines.findIndex(l => l.kind === stroke.stroke_kind)
+    if (index !== -1) {
+      question.lines[index].count += 1
+    } else {
+      const l = {
+        kind: stroke.stroke_kind,
+        count: 1
+      }
+      question.lines.push(l)
+    }
+  }
+
+  for (const hint of hints) {
+    question.hints.push(hint.toClientObj)
   }
   return res.json(question)
 })
 
-router.post('/answer', function(req, res) {
+router.post('/answer', async function(req, res) {
+  const Q = await Questions.getByDate(req.body.date, req.body.date_id)
+  if (!Q) {
+    return res.send('Bad')
+  }
+  const QBody = await QuestionType1.getByQuestionId(Q.id)
+  if (!QBody) {
+    return res.send('Bad')
+  }
+
   const answer = req.body.answers[0] || ''
-  return res.send(answer === '漢' ? 'OK' : 'NG')
+  const isCorrect = QBody.answers.includes(answer)
+  return res.send(isCorrect ? 'OK' : 'NG')
 })
 
-router.post('/openHint', function(req, res) {
+router.post('/openHint', async function(req, res) {
   // TODO Database check
-  return res.send('hit text')
+  try {
+    const Q = await Questions.getByDate(req.body.date, req.body.date_id)
+    const hint = await Hints.getByQuestionIDAndLevel(Q.id, req.body.hintLevel)
+    return res.send(hint.text)
+  } catch (err) {
+    return res.status(500).send('failed to get hint...')
+  }
 })
 
 module.exports = {

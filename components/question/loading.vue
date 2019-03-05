@@ -19,11 +19,15 @@ export default {
   },
   async created() {
     try {
-      await this.$store.dispatch('question/query', {
+      const Q = await this.$store.dispatch('question/query', {
         date: '2019-03-01',
-        date_id: 0
+        dateId: 0
       })
-      this.$emit('change-status', STATUS.MAIN)
+      if (Q) {
+        this.$emit('change-status', STATUS.MAIN)
+      } else {
+        this.$emit('change-status', STATUS.UNKNOWN)
+      }
     } catch (e) {
       this.error = e
     }
