@@ -13,6 +13,7 @@ const sequelize = new Sequelize({
 const Questions = sequelize.import('../../db/models/questions.js')
 const QuestionType1 = sequelize.import('../../db/models/questiontype1.js')
 const Hints = sequelize.import('../../db/models/hints.js')
+const KanjiStrokes = sequelize.import('../../db/models/kanjistrokes.js')
 
 // import { resolve } from 'dns'
 
@@ -39,14 +40,29 @@ router.post('/', async function(req, res) {
   })
   const hints = await Hints.getByQuestionId(Q.id)
 
+  const kanji = '金' || QBody.answers[0]
+  const strokes = await KanjiStrokes.getByKanji(kanji)
   const question = {
     corrected: false,
     date: req.body.date,
     date_id: req.body.date_id,
     description: QBody.description,
-    lines: [{ kind: 0, count: 1 }],
+    lines: [],
     hints: []
   }
+  for (const stroke of strokes) {
+    const index = question.lines.findIndex(l => l.kind === stroke.stroke_kind)
+    if (index !== -1) {
+      question.lines[index].count += 1
+    } else {
+      const l = {
+        kind: stroke.stroke_kind,
+        count: 1
+      }
+      question.lines.push(l)
+    }
+  }
+
   for (const hint of hints) {
     question.hints.push(hint.toClientObj)
   }
