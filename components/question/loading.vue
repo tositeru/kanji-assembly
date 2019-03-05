@@ -21,7 +21,7 @@ export default {
     try {
       const Q = await this.$store.dispatch('question/query', {
         date: '2019-03-01',
-        date_id: 0
+        dateId: 0
       })
       if (Q) {
         this.$emit('change-status', STATUS.MAIN)

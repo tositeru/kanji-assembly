@@ -6,7 +6,7 @@
         v-btn(class="hint-button" @click="goToHint()") 助言
     v-sheet(color="grey lighten-3" height="50vh" style="overflow:scroll;")
       v-layout(class="strokes" align-center justify-space-around row fill-height wrap)
-        div(v-for="(line, i) in question.lines" :key="i" class="stroke elevation-2" :style="`background-image: url('./strokes/${line.kind}');`")
+        div(v-for="(line, i) in question.lines" :key="i" class="stroke elevation-2" :style="`background-image: url(${getStrokeImage(line.kind)});`")
           | x{{line.count}}
     v-layout(row align-center)
         v-flex(grow)
@@ -29,6 +29,7 @@
 
 <script>
 import { STATUS } from './common'
+import Kanji from '~/kanji/kanji.js'
 
 export default {
   data() {
@@ -66,6 +67,10 @@ export default {
     showSendDialog() {
       this.doShowSendDialog =
         this.answerRules.filter(rule => rule(this.answer) !== true).length <= 0
+    },
+    getStrokeImage(strokeIndex) {
+      const stroke = Kanji.getStrokeImage(strokeIndex)
+      return stroke
     }
   }
 }

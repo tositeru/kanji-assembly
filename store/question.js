@@ -4,7 +4,7 @@ export const state = () => ({
   currentQuestion: {
     corrected: false,
     date: null,
-    date_id: -1,
+    dateId: -1,
     description: '',
     lines: [],
     hints: []
@@ -16,7 +16,7 @@ export const mutations = {
   set(state, question) {
     state.currentQuestion.corrected = question.corrected
     state.currentQuestion.date = question.date
-    state.currentQuestion.date_id = question.date_id
+    state.currentQuestion.dateId = question.dateId
     state.currentQuestion.description = question.description
     state.currentQuestion.lines = question.lines
     state.currentQuestion.hints = question.hints
@@ -39,11 +39,11 @@ export const mutations = {
 function makeQuestionParam(date, dateId) {
   return {
     date: date,
-    date_id: dateId
+    dateId: dateId
   }
 }
 function makeParam(question) {
-  return makeQuestionParam(question.date, question.date_id)
+  return makeQuestionParam(question.date, question.dateId)
 }
 
 export const actions = {

@@ -28,7 +28,7 @@ router.use((req, res, next) => {
 
 router.post('/', async function(req, res) {
   // TODO Query Database
-  const Q = await Questions.getByDate(req.body.date, req.body.date_id)
+  const Q = await Questions.getByDate(req.body.date, req.body.dateId)
   if (!Q) {
     return res.send('Bad')
   }
@@ -44,7 +44,7 @@ router.post('/', async function(req, res) {
     date: req.body.date,
     date_id: req.body.date_id,
     description: QBody.description,
-    lines: [{ kind: 'stroke04.gif', count: 1 }],
+    lines: [{ kind: 0, count: 1 }],
     hints: []
   }
   for (const hint of hints) {
