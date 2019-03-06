@@ -6,7 +6,8 @@
         | /
         n-link(to='/signup') サインアップ
     div(class="Ad") 広告スペース
-    question(title="今日の問題")
+    question()
+      div(class="vertical-centering") 今日の問題
 </template>
 
 <script>
@@ -29,6 +30,9 @@ h1 {
     text-align: right;
     margin-right: 10%;
   }
+}
+.vertical-centering {
+  margin: auto auto;
 }
 
 .Ad {

@@ -1,6 +1,7 @@
-<template lang=pug>
-  v-container(class="today-question")
-    h2 {{ title }}
+<template lang="pug">
+  v-container(class="today-question elevation-4")
+    div(class="title elevation-1")
+      slot()
     v-scroll-x-transition(mode="out-in")
       component(:is="currentCondition" @change-status="changeStatus($event)")
 </template>
@@ -16,9 +17,6 @@ export default {
     juding: () => import('./judging.vue'),
     result: () => import('./result.vue'),
     hint: () => import('./hint.vue')
-  },
-  props: {
-    title: { type: String, default: '問題' }
   },
   data() {
     return {
@@ -44,16 +42,19 @@ export default {
 
 <style lang="scss" scoped>
 .today-question {
-  border: 1px solid black;
   margin: 13px auto;
 
-  h2 {
+  .title {
     font-size: 32px;
     background: white;
 
+    height: 40px;
+
     display: table;
-    margin: -40px auto auto 10px;
-    padding: 0px 25px;
+    margin: -30px auto auto 10px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 </style>
