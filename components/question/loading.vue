@@ -1,4 +1,4 @@
-<template lang=pug>
+<template lang="pug">
   v-layout()
     v-flex(grop)
       v-sheet(color="grey lighten-3" height="50vh")
@@ -17,11 +17,12 @@ export default {
       error: false
     }
   },
-  async created() {
+  async mounted() {
     try {
+      const QDate = this.$store.state.question.currentDate
       const Q = await this.$store.dispatch('question/query', {
-        date: '2019-03-01',
-        dateId: 0
+        date: QDate.date,
+        dateId: QDate.dateId
       })
       if (Q) {
         this.$emit('change-status', STATUS.MAIN)

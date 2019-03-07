@@ -8,6 +8,7 @@
 
 <script>
 import { STATUS } from './common'
+import QuestionDate from './questionDate'
 
 export default {
   components: {
@@ -18,9 +19,13 @@ export default {
     result: () => import('./result.vue'),
     hint: () => import('./hint.vue')
   },
+  props: {
+    questionDate: QuestionDate
+  },
   data() {
     return {
-      status: STATUS.LOADING
+      status: STATUS.LOADING,
+      unwatchQuestionDate: null
     }
   },
   computed: {
@@ -30,6 +35,31 @@ export default {
       } else {
         return STATUS.UNKNOWN
       }
+    }
+  },
+  watch: {
+    questionDate: function(newDate, oldDate) {
+      this.status = STATUS.LOADING
+    }
+  },
+  mounted() {
+    // 初期の問題の日時の設定
+    this.$store.commit('question/setQuestionDate', {
+      date: this.questionDate.date,
+      dateId: 0
+    })
+    this.unwatchQuestionDate = this.$store.watch(
+      (state, getter) => {
+        return state.question.currentDateUpdateNotifier
+      },
+      (newDate, old) => {
+        this.status = STATUS.LOADING
+      }
+    )
+  },
+  destroyed() {
+    if (this.unwatchQuestionDate) {
+      this.unwatchQuestionDate()
     }
   },
   methods: {

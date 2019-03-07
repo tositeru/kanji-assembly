@@ -1,5 +1,6 @@
 const express = require('express')
 const Sequelize = require('sequelize')
+const consola = require('consola')
 const utils = require('../utils.js')
 
 const sequelize = new Sequelize({
@@ -40,12 +41,12 @@ router.post('/', async function(req, res) {
   })
   const hints = await Hints.getByQuestionId(Q.id)
 
-  const kanji = '金' || QBody.answers[0]
+  const kanji = QBody.answers[0]
   const strokes = await KanjiStrokes.getByKanji(kanji)
   const question = {
     corrected: false,
     date: req.body.date,
-    date_id: req.body.date_id,
+    dateId: req.body.dateId,
     description: QBody.description,
     lines: [],
     hints: []
@@ -70,7 +71,7 @@ router.post('/', async function(req, res) {
 })
 
 router.post('/answer', async function(req, res) {
-  const Q = await Questions.getByDate(req.body.date, req.body.date_id)
+  const Q = await Questions.getByDate(req.body.date, req.body.dateId)
   if (!Q) {
     return res.send('Bad')
   }
@@ -87,11 +88,24 @@ router.post('/answer', async function(req, res) {
 router.post('/openHint', async function(req, res) {
   // TODO Database check
   try {
-    const Q = await Questions.getByDate(req.body.date, req.body.date_id)
+    const Q = await Questions.getByDate(req.body.date, req.body.dateId)
     const hint = await Hints.getByQuestionIDAndLevel(Q.id, req.body.hintLevel)
     return res.send(hint.text)
   } catch (err) {
     return res.status(500).send('failed to get hint...')
+  }
+})
+
+router.get('/getListInMonth', async function(req, res) {
+  try {
+    if (!req.query.month) {
+      return res.status(400).send('failed to get question')
+    }
+    consola.info(req.query.month)
+    const questionDateList = await Questions.getQuestionListInMonth('2019-03')
+    return res.json(questionDateList)
+  } catch (err) {
+    return res.stataus(500).send('failed to get question list')
   }
 })
 

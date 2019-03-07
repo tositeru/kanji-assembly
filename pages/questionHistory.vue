@@ -4,13 +4,15 @@
     v-layout(justify-center)
       v-flex()
         h2(class="display-3 text-xs-center") 問題一覧
-    question()
+    question(:question-date="questionDate")
       template()
         questionPickerWithDate()
     //- v-scroll-x-transition(mode="out-in")
     //-   component(:is="currentCondition" @change-status="changeStatus($event)")
 </template>
 <script>
+import moment from 'moment'
+import QuestionDate from '~/components/question/questionDate'
 import Question from '~/components/question/question.vue'
 import questionPickerWithDate from '~/components/question/questionPickerWithDate.vue'
 
@@ -20,7 +22,9 @@ export default {
     questionPickerWithDate: questionPickerWithDate
   },
   data() {
-    return {}
+    return {
+      questionDate: new QuestionDate(moment().format('YYYY-MM-DD'), 0)
+    }
   },
   computed: {},
   methods: {}

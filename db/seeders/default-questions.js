@@ -64,26 +64,191 @@ function makeHintsData(text, count) {
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
+    const currentDate = moment()
     return createQuestion(
       queryInterface,
-      makeQuestion('2019-03-01 00Z', 0, 1),
-      makeQuestionType1("Q1's descriptions", '木'),
-      makeHintsData('first question', 3)
+      makeQuestion(
+        currentDate
+          .clone()
+          .subtract(3, 'day')
+          .format('YYYY-MM-DD'),
+        0,
+        1
+      ),
+      makeQuestionType1("Q1's descriptions", '日'),
+      makeHintsData('4画の漢字です', 3)
     )
       .then(() =>
         createQuestion(
           queryInterface,
-          makeQuestion('2019-03-02 00Z', 0, 1),
-          makeQuestionType1("Q2's descriptions", '水'),
-          makeHintsData('second question', 3)
+          makeQuestion(
+            currentDate
+              .clone()
+              .subtract(3, 'day')
+              .format('YYYY-MM-DD'),
+            1,
+            1
+          ),
+          makeQuestionType1('3 day ago question2', '土干'),
+          makeHintsData('複数解答があります', 2)
         )
       )
       .then(() =>
         createQuestion(
           queryInterface,
-          makeQuestion('2019-03-03 00Z', 0, 1),
-          makeQuestionType1("Q3's descriptions", '火'),
+          makeQuestion(
+            currentDate
+              .clone()
+              .subtract(3, 'day')
+              .format('YYYY-MM-DD'),
+            2,
+            1
+          ),
+          makeQuestionType1('3 day ago question3', '水'),
+          makeHintsData('部首にも使われます', 1)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .subtract(2, 'day')
+              .format('YYYY-MM-DD'),
+            0,
+            1
+          ),
+          makeQuestionType1('2 day ago question1', '月'),
+          makeHintsData('宇宙にあります', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .subtract(2, 'day')
+              .format('YYYY-MM-DD'),
+            1,
+            1
+          ),
+          makeQuestionType1('2 day ago question2', '金'),
+          makeHintsData('曜日に使われています', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .subtract(1, 'day')
+              .format('YYYY-MM-DD'),
+            0,
+            1
+          ),
+          makeQuestionType1('1 day ago question1', '火'),
+          makeHintsData('部首にも使われます', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .subtract(1, 'day')
+              .format('YYYY-MM-DD'),
+            1,
+            1
+          ),
+          makeQuestionType1('1 day ago question2', '木'),
+          makeHintsData('4画の漢字です', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(currentDate.format('YYYY-MM-DD'), 0, 1),
+          makeQuestionType1("Q3's descriptions", '水'),
           makeHintsData('third question', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .add(1, 'day')
+              .format('YYYY-MM-DD'),
+            0,
+            1
+          ),
+          makeQuestionType1('1 day ahead question1', '木'),
+          makeHintsData('ひんっと', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .add(1, 'day')
+              .format('YYYY-MM-DD'),
+            1,
+            1
+          ),
+          makeQuestionType1('1 day ahead question2', '火'),
+          makeHintsData('燃えろよ燃えろ', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .add(2, 'day')
+              .format('YYYY-MM-DD'),
+            0,
+            1
+          ),
+          makeQuestionType1('2 day ahead question1', '金'),
+          makeHintsData('〇のなる木', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .add(2, 'day')
+              .format('YYYY-MM-DD'),
+            1,
+            1
+          ),
+          makeQuestionType1('2 day ahead question2', '月'),
+          makeHintsData('花鳥風◯', 3)
+        )
+      )
+      .then(() =>
+        createQuestion(
+          queryInterface,
+          makeQuestion(
+            currentDate
+              .clone()
+              .add(3, 'day')
+              .format('YYYY-MM-DD'),
+            0,
+            1
+          ),
+          makeQuestionType1('2 day ahead question1', '土'),
+          makeHintsData('ドドドドドドドッッッッッッッッッッ！', 3)
         )
       )
   },

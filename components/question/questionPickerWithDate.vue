@@ -9,7 +9,7 @@
       template(v-slot:activator="{ on }")
         v-text-field(
           v-model="currentDate"
-          :label="`選択中の問題 ${selectItem}`"
+          :label="`選択中の問題 ${selectQuestionName}`"
           prepend-icon="event"
           append-icon='event'
           @click:append="openQuestionList(currentDate)"
@@ -21,20 +21,28 @@
         no-title scrollable
         locale="ja"
         @input='openQuestionList($event)'
+        event-color="green lighten-1"
         :events="markColorOfDays"
       )
         v-spacer()
         v-btn(flat color="primary" @click="menu = false") Cancel
-    v-dialog(v-model="selectQuestionIdDialog" width="500px")
+    v-dialog(v-model="selectQuestionIdDialog" width="50%")
       v-card
         v-card-title(class="text-xs-center") 問題の選択
         v-card-text()
-          v-btn(v-for="(name, i) in items" :key="i" @click="selectQuestion(i)")
-            | {{ name }}
+          v-layout(justify-space-around)
+            v-btn(v-for="(id, i) in currentQuestionIdList" :key="i" @click="selectQuestion(i)")
+              | その{{ i+1 }}
         v-card-actions
             v-btn(@click="closeQuestionList()") 戻る
+      v-dialog(v-model="notifyNoneQuestionDialog" width="50%")
+        v-card
+          v-card-text(class="text-xs-center")
+            | その日に問題はありません。
 </template>
 <script>
+import moment from 'moment'
+
 /**
  * 問題選択の関数の流れのメモ
  *  1. 日付ボタンをクリック  -> v-date-pickerが開く
@@ -52,8 +60,15 @@ export default {
       selectQuestionIdDialog: false,
       currentDate: '2019-03-01',
       prevDate: null,
-      selectItem: '普通',
-      items: ['簡単', '普通', '難問']
+      selectQuestionId: 1,
+      currentQuestionIdList: [],
+      questionList: {},
+      notifyNoneQuestionDialog: false
+    }
+  },
+  computed: {
+    selectQuestionName() {
+      return `その${this.selectQuestionId + 1}`
     }
   },
   watch: {
@@ -68,21 +83,41 @@ export default {
       }
     }
   },
-  mounted() {},
+  async mounted() {
+    this.currentDate = this.$store.state.question.currentDate.date
+    if (!this.currentDate) {
+      this.currentDate = moment().format('YYYY-MM-DD')
+      this.$store.commit('question/setQuestionDate', {
+        date: moment().format('YYYY-MM-DD'),
+        dateId: 0
+      })
+    }
+    const month = moment(this.currentDate).format('YYYY-MM')
+    this.questionList = await this.$store.dispatch(
+      'question/getListInMonth',
+      month
+    )
+  },
   methods: {
     openQuestionList(selectDate) {
-      alert('問題がなかったら何もしないようにする')
+      const questions = this.questionList[selectDate]
+      if (!questions) {
+        this.notifyNoneQuestionDialog = true
+        return
+      }
+
+      this.currentQuestionIdList = questions
       this.selectQuestionIdDialog = true
       this.prevDate = this.currentDate
       this.currentDate = selectDate
     },
     selectQuestion(indexInDay) {
-      this.selectItem = this.items[indexInDay]
-      alert(
-        `選択した日付とIDの問題をサーバーに要求する.\n ${this.currentDate} ${
-          this.selectItem
-        }`
-      )
+      this.selectQuestionId = this.currentQuestionIdList[indexInDay]
+      // 変更があったことだけを告げる
+      this.$store.commit('question/setQuestionDate', {
+        date: this.currentDate,
+        dateId: indexInDay
+      })
       this.prevDate = null
       this.cancelToSelectQuestion()
     },
@@ -99,11 +134,12 @@ export default {
     },
 
     markColorOfDays(date) {
-      // TODO サーバーから問題がある日を取得する。
-      // 画面を読み込んだ時に通信する？
-      const [, , day] = date.split('-')
-      if ([12, 23, 26].includes(parseInt(day, 10))) return ['red']
-      return false
+      const idList = this.questionList[date]
+      if (!idList) {
+        return false
+      } else {
+        return ['red']
+      }
     }
   }
 }
