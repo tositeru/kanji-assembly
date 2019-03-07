@@ -12,7 +12,7 @@
           :label="`選択中の問題 ${selectQuestionName}`"
           prepend-icon="event"
           append-icon='event'
-          @click:append="openQuestionList(currentDate)"
+          @click:append="startQuestionSelectFlow(currentDate)"
           readonly
           max-width="50px"
           v-on="on")
@@ -20,7 +20,7 @@
         v-model="currentDate"
         no-title scrollable
         locale="ja"
-        @input='openQuestionList($event)'
+        @input='startQuestionSelectFlow($event)'
         event-color="green lighten-1"
         :events="markColorOfDays"
       )
@@ -31,7 +31,7 @@
         v-card-title(class="text-xs-center") 問題の選択
         v-card-text()
           v-layout(justify-space-around)
-            v-btn(v-for="(id, i) in currentQuestionIdList" :key="i" @click="selectQuestion(i)")
+            v-btn(v-for="(id, i) in currentQuestionIdList" :key="i" @click="nextQuestionSelectFlow(i)")
               | その{{ i+1 }}
         v-card-actions
             v-btn(@click="closeQuestionList()") 戻る
@@ -44,14 +44,41 @@
 import moment from 'moment'
 
 /**
- * 問題選択の関数の流れのメモ
- *  1. 日付ボタンをクリック  -> v-date-pickerが開く
- *  2. 日付を選択          -> openQuestionList()を呼び出す
- *  3. その日の問題を選択    -> selectQuestion()内でサーバーに選択した問題をリクエストする
- *  cancel.1   その日の問題ダイアログをキャンセル -> closeQuestionList()
- *  cancel.all 選択中止 -> cancelToSelectQuestion()
- *  日付の右側にあるアイコンをクリックすると 3.その日の問題を選択 を開始する
+ * 問題選択用のコルーチン
+ * date-pickerまたは日にちを渡すことから始める
+ * キャンセル処理は他で用意している
+ *
+ * @param This Vueインスタンス
+ * @param initialDate 選択対象となる日にち
  */
+function* generateQuestionSelectFlow(This, initialDate) {
+  // 渡された日にちに問題があるかチェック
+  const questions = This.questionList[initialDate]
+  if (!questions) {
+    This.notifyNoneQuestionDialog = true
+    return
+  }
+  // 日にちの設定
+  // キャンセルしたときのための処理も含む
+  This.currentQuestionIdList = questions
+  This.selectQuestionIdDialog = true
+  This.prevDate = This.currentDate
+  This.currentDate = initialDate
+
+  // 指定した日にちの問題IDを取得
+  const indexInDay = yield
+  This.selectQuestionId = This.currentQuestionIdList[indexInDay]
+
+  // 変更があったことだけを告げる
+  This.$store.commit('question/setQuestionDate', {
+    date: This.currentDate,
+    dateId: indexInDay
+  })
+
+  // 終了処理
+  This.prevDate = null
+  This.cancelToSelectQuestion()
+}
 
 export default {
   data() {
@@ -63,7 +90,8 @@ export default {
       selectQuestionId: 1,
       currentQuestionIdList: [],
       questionList: {},
-      notifyNoneQuestionDialog: false
+      notifyNoneQuestionDialog: false,
+      questionSelectFlow: null
     }
   },
   computed: {
@@ -99,30 +127,17 @@ export default {
     )
   },
   methods: {
-    openQuestionList(selectDate) {
-      const questions = this.questionList[selectDate]
-      if (!questions) {
-        this.notifyNoneQuestionDialog = true
-        return
-      }
+    startQuestionSelectFlow(initialDate) {
+      this.questionSelectFlow = generateQuestionSelectFlow(this, initialDate)
+      this.questionSelectFlow.next()
+    },
+    nextQuestionSelectFlow(value) {
+      this.questionSelectFlow.next(value)
+    },
 
-      this.currentQuestionIdList = questions
-      this.selectQuestionIdDialog = true
-      this.prevDate = this.currentDate
-      this.currentDate = selectDate
-    },
-    selectQuestion(indexInDay) {
-      this.selectQuestionId = this.currentQuestionIdList[indexInDay]
-      // 変更があったことだけを告げる
-      this.$store.commit('question/setQuestionDate', {
-        date: this.currentDate,
-        dateId: indexInDay
-      })
-      this.prevDate = null
-      this.cancelToSelectQuestion()
-    },
     closeQuestionList() {
       this.selectQuestionIdDialog = false
+      this.questionSelectFlow = null
     },
     cancelToSelectQuestion() {
       this.menu = false
