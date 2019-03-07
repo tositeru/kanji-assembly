@@ -1,12 +1,14 @@
-<template lang=pug>
-  v-container(class="today-question")
-    h2 {{ title }}
+<template lang="pug">
+  v-container(class="today-question elevation-4")
+    div(class="title elevation-1")
+      slot()
     v-scroll-x-transition(mode="out-in")
       component(:is="currentCondition" @change-status="changeStatus($event)")
 </template>
 
 <script>
 import { STATUS } from './common'
+import QuestionDate from './questionDate'
 
 export default {
   components: {
@@ -18,11 +20,12 @@ export default {
     hint: () => import('./hint.vue')
   },
   props: {
-    title: { type: String, default: '問題' }
+    questionDate: QuestionDate
   },
   data() {
     return {
-      status: STATUS.LOADING
+      status: STATUS.LOADING,
+      unwatchQuestionDate: null
     }
   },
   computed: {
@@ -32,6 +35,31 @@ export default {
       } else {
         return STATUS.UNKNOWN
       }
+    }
+  },
+  watch: {
+    questionDate: function(newDate, oldDate) {
+      this.status = STATUS.LOADING
+    }
+  },
+  mounted() {
+    // 初期の問題の日時の設定
+    this.$store.commit('question/setQuestionDate', {
+      date: this.questionDate.date,
+      dateId: 0
+    })
+    this.unwatchQuestionDate = this.$store.watch(
+      (state, getter) => {
+        return state.question.currentDateUpdateNotifier
+      },
+      (newDate, old) => {
+        this.status = STATUS.LOADING
+      }
+    )
+  },
+  destroyed() {
+    if (this.unwatchQuestionDate) {
+      this.unwatchQuestionDate()
     }
   },
   methods: {
@@ -44,16 +72,19 @@ export default {
 
 <style lang="scss" scoped>
 .today-question {
-  border: 1px solid black;
   margin: 13px auto;
 
-  h2 {
+  .title {
     font-size: 32px;
     background: white;
 
+    height: 40px;
+
     display: table;
-    margin: -40px auto auto 10px;
-    padding: 0px 25px;
+    margin: -30px auto auto 10px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 </style>

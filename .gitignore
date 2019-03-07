@@ -84,3 +84,5 @@ dist
 sw.*
 
 ssl/
+*.db
+db/test.js

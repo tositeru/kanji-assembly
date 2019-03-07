@@ -6,13 +6,15 @@
         v-btn(class="hint-button" @click="goToHint()") 助言
     v-sheet(color="grey lighten-3" height="50vh" style="overflow:scroll;")
       v-layout(class="strokes" align-center justify-space-around row fill-height wrap)
-        div(v-for="(stroke, i) in question.strokes" :key="i" class="stroke elevation-2" :style="`background-image: url('./strokes/${stroke.kind}');`")
-          | x{{stroke.count}}
+        div(v-for="(line, i) in question.lines" :key="i" class="stroke elevation-2" :style="`background-image: url(${getStrokeImage(line.kind)});`")
+          | x{{line.count}}
     v-layout(row align-center)
         v-flex(grow)
             v-text-field(v-model="answer" :rules="answerRules" :counter="1" required label="回答" reverse class="text-xs-right")
         v-flex(shrink)
-          v-btn(class="btn-answer" @click="showSendDialog()" :disabled="!validAnswer") 送信
+          div(v-if="question.corrected") 正解済み
+            v-icon() check_circle
+          v-btn(v-else class="btn-answer" @click="showSendDialog()" :disabled="!validAnswer") 送信
           v-dialog(v-model="doShowSendDialog" width="500")
             v-card
               v-card-title(class="headline grey lighten-2" primary-title) 回答を送信
@@ -27,13 +29,13 @@
 
 <script>
 import { STATUS } from './common'
+import Kanji from '~/kanji/kanji.js'
 
 export default {
   data() {
     return {
       doShowSendDialog: false,
-      question: null,
-      answer: '亜',
+      answer: '',
       answerRules: [v => v.length === 1 || '1文字だけ入力してください']
     }
   },
@@ -46,29 +48,29 @@ export default {
           this.answer
         )
       )
+    },
+    question() {
+      return this.$store.state.question.currentQuestion
     }
   },
   created() {
-    this.question = {
-      description: '下にある漢字の一画を組み立ててできる漢字は何でしょうか？',
-      strokes: [
-        { kind: 'stroke01.gif', count: 2 },
-        { kind: 'stroke02.gif', count: 2 },
-        { kind: 'stroke03.gif', count: 2 },
-        { kind: 'stroke04.gif', count: 2 }
-      ]
-    }
+    this.answer = this.$store.state.question.answers[0] || ''
   },
   methods: {
     goToHint() {
       this.$emit('change-status', STATUS.HINT)
     },
     sendAnswer() {
+      this.$store.commit('question/setAnswers', [this.answer])
       this.$emit('change-status', STATUS.JUDGING)
     },
     showSendDialog() {
       this.doShowSendDialog =
         this.answerRules.filter(rule => rule(this.answer) !== true).length <= 0
+    },
+    getStrokeImage(strokeIndex) {
+      const stroke = Kanji.getStrokeImage(strokeIndex)
+      return stroke
     }
   }
 }
