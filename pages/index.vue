@@ -6,16 +6,25 @@
         | /
         n-link(to='/signup') サインアップ
     div(class="Ad") 広告スペース
-    question(title="今日の問題")
+    question(:question-date="questionDate")
+      div(class="vertical-centering") 今日の問題
 </template>
 
 <script>
+import moment from 'moment'
+import QuestionDate from '~/components/question/questionDate'
+
 export default {
   components: {
     question: () => import('~/components/question/question.vue')
   },
   data() {
-    return {}
+    return {
+      questionDate: new QuestionDate(moment().format('YYYY-MM-DD'), 0)
+    }
+  },
+  beforeCreate() {
+    this.questionDate = new QuestionDate(moment().format('YYYY-MM-DD'), 0)
   },
   methods: {}
 }
@@ -29,6 +38,9 @@ h1 {
     text-align: right;
     margin-right: 10%;
   }
+}
+.vertical-centering {
+  margin: auto auto;
 }
 
 .Ad {

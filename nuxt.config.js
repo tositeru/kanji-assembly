@@ -1,7 +1,9 @@
 const fs = require('fs')
 const path = require('path')
 const bodyParser = require('body-parser')
+const ja = require('vuetify/es5/locale/ja')
 const pkg = require('./package')
+
 module.exports = {
   mode: 'universal',
 
@@ -60,6 +62,10 @@ module.exports = {
     }
   },
 
+  vuetify: {
+    locales: { ja },
+    current: 'ja'
+  },
   /*
   ** Build configuration
   */
@@ -98,5 +104,5 @@ module.exports = {
       cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
     }
   },
-  serverMiddleware: ['redirect-ssl', bodyParser.json(), '~/server/Q/index.js']
+  serverMiddleware: ['redirect-ssl', bodyParser.json(), '~/server/Q/router.js']
 }

@@ -1,10 +1,14 @@
 import axios from 'axios'
+import consola from 'consola'
 
 export const state = () => ({
+  currentDateUpdateNotifier: 1,
+  currentDate: {
+    date: null,
+    dateId: -1
+  },
   currentQuestion: {
     corrected: false,
-    date: null,
-    dateId: -1,
     description: '',
     lines: [],
     hints: []
@@ -12,14 +16,28 @@ export const state = () => ({
   answers: []
 })
 
+function makeEmptyQuestion() {
+  return {
+    corrected: false,
+    description: '',
+    lines: [],
+    hints: []
+  }
+}
+
 export const mutations = {
   set(state, question) {
     state.currentQuestion.corrected = question.corrected
-    state.currentQuestion.date = question.date
-    state.currentQuestion.dateId = question.dateId
     state.currentQuestion.description = question.description
     state.currentQuestion.lines = question.lines
     state.currentQuestion.hints = question.hints
+  },
+  setQuestionDate(state, questionDate) {
+    state.currentDate.date = questionDate.date
+    state.currentDate.dateId = questionDate.dateId
+    state.currentDateUpdateNotifier += 1
+    // 念のために問題の日付が変わったら、問題データは無効化しておく。
+    state.currentQuestion = makeEmptyQuestion()
   },
   setHintText(state, { level, text }) {
     const hint = state.currentQuestion.hints.find(hint => hint.level === level)
@@ -42,8 +60,8 @@ function makeQuestionParam(date, dateId) {
     dateId: dateId
   }
 }
-function makeParam(question) {
-  return makeQuestionParam(question.date, question.dateId)
+function makeParam(state) {
+  return makeQuestionParam(state.currentDate.date, state.currentDate.dateId)
 }
 
 export const actions = {
@@ -63,9 +81,8 @@ export const actions = {
     if (!state.currentQuestion) {
       return false
     }
-    const Q = state.currentQuestion
 
-    const param = makeParam(Q)
+    const param = makeParam(state)
     param.answers = answers
     const res = await axios.post('/Q/answer', param)
     const result = res.data === 'OK'
@@ -84,12 +101,26 @@ export const actions = {
     }
 
     try {
-      const param = makeParam(Q)
+      const param = makeParam(state)
       param.hintLevel = hintLevel
       const res = await axios.post('/Q/openHint', param)
       commit('setHintText', { level: hintLevel, text: res.data })
       return res.data
     } catch (err) {
+      return false
+    }
+  },
+
+  async getListInMonth({ state, commit }, month) {
+    try {
+      const list = await axios.get('/Q/getListInMonth', {
+        params: {
+          month: month
+        }
+      })
+      return list.data
+    } catch (err) {
+      consola.error(err)
       return false
     }
   }
