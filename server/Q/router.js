@@ -1,12 +1,20 @@
 const express = require('express')
+const Sequelize = require('sequelize')
 const consola = require('consola')
 const utils = require('../utils.js')
-const {
-  Questions,
-  QuestionType1,
-  Hints,
-  KanjiStrokes
-} = require('../../db/database')
+
+const sequelize = new Sequelize({
+  username: 'wciantd',
+  database: 'database_development',
+  dialect: 'sqlite',
+  storage: 'db/database.db',
+  operatorsAliases: false
+})
+
+const Questions = sequelize.import('../../db/models/questions.js')
+const QuestionType1 = sequelize.import('../../db/models/questiontype1.js')
+const Hints = sequelize.import('../../db/models/hints.js')
+const KanjiStrokes = sequelize.import('../../db/models/kanjistrokes.js')
 
 // import { resolve } from 'dns'
 
