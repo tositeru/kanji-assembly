@@ -25,18 +25,25 @@ const authMailTemplateFn = pug.compileFile(
 
 router.post('/signup', async function(req, res) {
   try {
-    const token = await UserTmp.add(
+    const tokenOrError = await UserTmp.add(
       req.body.name,
       req.body.password,
       req.body.email
     )
+    if (typeof tokenOrError !== 'string') {
+      return res.status(202).json({
+        isSuccessed: false,
+        messages: tokenOrError
+      })
+    }
+    const token = tokenOrError
     const htmlContent = authMailTemplateFn({
       url: `https://localhost:3000/user/signup/${token}`
     })
     const sender = new MailSender('漢字組み立て工場　ユーザー確認', htmlContent)
     sender.send(`${req.body.name} <${req.body.email}>`)
 
-    return res.json({ message: 'OK' })
+    return res.json({ isSuccessed: true })
   } catch (error) {
     consola.error(error)
     return res.status(500).send('Bad')
@@ -60,6 +67,20 @@ router.get('/signup/:token', async function(req, res) {
     res.set('Content-Type', 'text/html')
     return res.send('<h1>Failed authentication user...</h1>')
   }
+})
+
+/** 使用しているユーザー情報を確認するためのURL
+ * @params name  ユーザー名
+ * @params email メールアドレス
+ */
+router.get('/check', function(req, res) {
+  // TODO Query for User Table
+  return res.json({
+    status: {
+      name: req.query.name !== 'Only',
+      email: req.query.email !== 'same@mail.com'
+    }
+  })
 })
 
 module.exports = {
