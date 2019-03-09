@@ -16,7 +16,9 @@ module.exports = (sequelize, DataTypes) => {
       },
       password: {
         type: DataTypes.STRING,
-        len: [3, 255]
+        validate: {
+          len: [8, 255]
+        }
       },
       email: {
         type: DataTypes.STRING,
@@ -52,10 +54,39 @@ module.exports = (sequelize, DataTypes) => {
         email: email,
         token: token
       })
+
+      // 他のエラーも一緒に判定できるようにあとで行っている
+      if (password.length < 8 || password.length > 255) {
+        throw new RangeError('使用できないパスワードの長さを登録に使用しました')
+      }
       return token
     } catch (error) {
-      consola.error(error)
-      return false
+      const checkColumns = [
+        {
+          name: 'name',
+          message: '使用できない名前を登録に使用しました'
+        },
+        {
+          name: 'email',
+          message: '使用できないメールアドレスを登録に使用しました'
+        }
+      ]
+      const errString = error.toString()
+      const errorMessages = {}
+      for (const col of checkColumns) {
+        if (errString.includes(col.name)) {
+          errorMessages[col.name] = col.message
+        }
+      }
+      // パスワードはハッシュ化しているので直接確認する
+      if (password.length < 8 || password.length > 255) {
+        errorMessages.password = '使用できないパスワードを登録に使用しました'
+      }
+      consola.error(
+        `ユーザー登録失敗. name=${name},email=${email},password=${password};`,
+        errorMessages
+      )
+      return errorMessages
     }
   }
 
