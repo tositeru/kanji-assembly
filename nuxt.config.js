@@ -51,7 +51,6 @@ module.exports = {
   */
   axios: {
     // See https://github.com/nuxt-community/axios-module#options
-    https: true
   },
 
   router: {
@@ -105,10 +104,5 @@ module.exports = {
       cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
     }
   },
-  serverMiddleware: [
-    'redirect-ssl',
-    bodyParser.json(),
-    '~/server/Q/router.js',
-    '~/server/user/router.js'
-  ]
+  serverMiddleware: ['redirect-ssl', bodyParser.json(), '~/server/Q/router.js']
 }
