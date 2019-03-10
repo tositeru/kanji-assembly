@@ -5,7 +5,7 @@ const pug = require('pug')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
 
-const { UserTmp } = require('../../db/database')
+const { User, UserTmp } = require('../../db/database')
 
 // import { resolve } from 'dns'
 
@@ -19,12 +19,40 @@ router.use((req, res, next) => {
   next()
 })
 
+router.post('/login', async function(req, res) {
+  try {
+    const user = await User.login(req.body.email, req.body.password)
+    if (!user) {
+      return res.status(202).json({
+        isSuccessed: false,
+        message: '認証に失敗しました'
+      })
+    }
+
+    const userID = 11111
+    return res.json({
+      isSuccessed: true,
+      id: userID
+    })
+  } catch (error) {
+    consola.error(error)
+    return res.status(500).send('Bad')
+  }
+})
+
 const authMailTemplateFn = pug.compileFile(
   path.resolve(__dirname, 'authMailTemplate.pug')
 )
 
 router.post('/signup', async function(req, res) {
   try {
+    if (await User.isExist(req.body)) {
+      return res.status(202).json({
+        isSuccessed: false,
+        messages: '既存のユーザーと同じ情報を持っています'
+      })
+    }
+
     const tokenOrError = await UserTmp.add(
       req.body.name,
       req.body.password,
@@ -55,9 +83,14 @@ router.get('/signup/:token', async function(req, res) {
   consola.info('TODO insert User from TmpUser and delte TmpUser')
 
   try {
-    const isValid = await UserTmp.isValidToken(req.params.token)
-    if (!isValid) {
+    const userInfo = await UserTmp.isValidToken(req.params.token)
+    if (!userInfo) {
       return res.send('<h1>Failed authentication user...</h1>')
+    }
+
+    const user = await User.add(userInfo)
+    if (!user) {
+      throw new Error('Failed to add because User already exsits...')
     }
 
     res.set('Content-Type', 'text/html')
