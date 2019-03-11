@@ -7,6 +7,7 @@
 import LoginForm from '~/components/user/loginForm.vue'
 
 export default {
+  middleware: ['notAuthenticated'],
   components: {
     'login-form': LoginForm
   },

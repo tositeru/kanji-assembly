@@ -7,8 +7,8 @@ export const state = () => ({
 })
 
 export const mutations = {
-  setAuth(state, auth) {
-    state.auth = auth
+  setAuthToken(state, authToken) {
+    state.auth = authToken
   }
 }
 
@@ -38,12 +38,12 @@ export const actions = {
 
   async login({ commit }, { email, password }) {
     try {
-      const res = await axios.post('/login', {
+      const res = await axios.post('/user/login', {
         email: email,
         password: password
       })
       if (res.data.isSuccessed) {
-        commit('setUserID', res.data.id)
+        commit('setAuthToken', res.data.token)
       }
       return res.data
     } catch (error) {
@@ -53,6 +53,24 @@ export const actions = {
         messages: {
           network: 'ログインに失敗しました。'
         }
+      }
+    }
+  },
+  async logout({ state, commit }) {
+    try {
+      await axios.post('/user/logout', {
+        token: state.auth
+      })
+
+      commit('setAuthToken', null)
+      return {
+        isSuccessed: true
+      }
+    } catch (error) {
+      consola.error('Failed user logout', error)
+      return {
+        isSuccessed: false,
+        message: 'ログアウトに失敗しました'
       }
     }
   }

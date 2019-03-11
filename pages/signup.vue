@@ -7,6 +7,7 @@
 import SignupForm from '~/components/user/signupForm'
 
 export default {
+  middleware: ['notAuthenticated'],
   components: {
     'signup-form': SignupForm
   },

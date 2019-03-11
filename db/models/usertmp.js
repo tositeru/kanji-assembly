@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes) => {
 
   UserTmp.add = async (name, password, email) => {
     try {
-      const token = crypto.randomBytes(16).toString('base64')
+      const token = crypto.randomBytes(64).toString('hex')
       const encryptPassword = commonCrypt.encryptPassword(password)
       await UserTmp.upsert({
         name: name,
@@ -101,7 +101,9 @@ module.exports = (sequelize, DataTypes) => {
     const usertmp = await UserTmp.findOne({
       where: {
         token: token,
-        updatedAt: expirationDate.toISOString()
+        updatedAt: {
+          [sequelize.Op.gte]: expirationDate.toISOString()
+        }
       }
     })
     if (!usertmp) {

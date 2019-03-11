@@ -14,7 +14,7 @@ module.exports = {
       'sha512'
     )
     return {
-      hashedPassword: hashedPassword,
+      hashedPassword: hashedPassword.toString('hex'),
       salt: salt
     }
   }
