@@ -2,6 +2,7 @@
 const crypto = require('crypto')
 const moment = require('moment')
 const consola = require('consola')
+const commonCrypt = require('./commonCrypt')
 
 module.exports = (sequelize, DataTypes) => {
   const UserTmp = sequelize.define(
@@ -17,7 +18,13 @@ module.exports = (sequelize, DataTypes) => {
       password: {
         type: DataTypes.STRING,
         validate: {
-          len: [8, 255]
+          min: 8
+        }
+      },
+      password2: {
+        type: DataTypes.STRING,
+        validate: {
+          min: 8
         }
       },
       email: {
@@ -44,13 +51,12 @@ module.exports = (sequelize, DataTypes) => {
 
   UserTmp.add = async (name, password, email) => {
     try {
-      const token = crypto.randomBytes(16).toString('base64')
+      const token = crypto.randomBytes(64).toString('hex')
+      const encryptPassword = commonCrypt.encryptPassword(password)
       await UserTmp.upsert({
         name: name,
-        password: crypto
-          .createHash('SHA512')
-          .update(password)
-          .digest('hex'),
+        password: encryptPassword.hashedPassword,
+        password2: encryptPassword.salt,
         email: email,
         token: token
       })
@@ -95,14 +101,22 @@ module.exports = (sequelize, DataTypes) => {
     const usertmp = await UserTmp.findOne({
       where: {
         token: token,
-        updatedAt: expirationDate.toISOString()
+        updatedAt: {
+          [sequelize.Op.gte]: expirationDate.toISOString()
+        }
       }
     })
     if (!usertmp) {
-      return false
+      return null
+    }
+    const result = {
+      name: usertmp.name,
+      email: usertmp.email,
+      password: usertmp.password,
+      password2: usertmp.password2
     }
     usertmp.destroy()
-    return true
+    return result
   }
 
   return UserTmp

@@ -17,5 +17,6 @@ module.exports = {
   Hints: sequelize.import('./models/hints.js'),
   KanjiStrokes: sequelize.import('./models/kanjistrokes.js'),
 
-  UserTmp: sequelize.import('./models/usertmp.js')
+  UserTmp: sequelize.import('./models/usertmp.js'),
+  User: sequelize.import('./models/user.js')
 }

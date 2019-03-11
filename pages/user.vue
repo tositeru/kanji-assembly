@@ -5,6 +5,7 @@
     v-layout()
       v-card(flat class="elevation-3")
         v-card-title() {{ user.name }}さんのページ
+          v-btn(@click="logout") ログアウト
         v-card-text() 何かしらの情報
         v-card-actions()
           v-btn(@click="doEdit = !doEdit") 編集
@@ -25,6 +26,7 @@
 
 <script>
 export default {
+  middleware: ['authenticated'],
   data() {
     return {
       showPassword1: false,
@@ -43,6 +45,12 @@ export default {
     save() {
       alert('please implement')
       this.doEdit = false
+    },
+    async logout() {
+      const result = await this.$store.dispatch('user/logout')
+      if (result.isSuccessed) {
+        this.$router.push('/')
+      }
     }
   }
 }

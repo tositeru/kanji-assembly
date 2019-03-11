@@ -5,7 +5,7 @@ const pug = require('pug')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
 
-const { UserTmp } = require('../../db/database')
+const { User, UserTmp } = require('../../db/database')
 
 // import { resolve } from 'dns'
 
@@ -19,12 +19,82 @@ router.use((req, res, next) => {
   next()
 })
 
+function validateAuthToken(req, res, next) {
+  const token = req.body.token || req.headers['x-access-token']
+  if (!token) {
+    return res.status(403).json({
+      message: '認証に失敗しました。'
+    })
+  }
+
+  const userData = User.validateAuthToken(token)
+  if (!userData) {
+    return res.status(403).json({
+      message: '認証に失敗しました。'
+    })
+  }
+  req.userData = userData
+  next()
+}
+
+router.post('/login', async function(req, res) {
+  try {
+    const token = await User.login(req.body.email, req.body.password)
+    if (!token) {
+      return res.status(202).json({
+        isSuccessed: false,
+        message: '認証に失敗しました'
+      })
+    }
+
+    return res.json({
+      isSuccessed: true,
+      token: token
+    })
+  } catch (error) {
+    consola.error(error)
+    return res.status(500).send({
+      isSuccessed: false,
+      message: 'サーバー側の不具合により認証に失敗しました'
+    })
+  }
+})
+
+router.post('/logout', validateAuthToken, async function(req, res) {
+  try {
+    const isSuccessed = await User.logout(req.userData)
+    if (!isSuccessed) {
+      return res.status(202).json({
+        isSuccessed: false,
+        message: 'ログアウトに失敗しました'
+      })
+    }
+
+    return res.json({
+      isSuccessed: true
+    })
+  } catch (error) {
+    consola.error(error)
+    return res.status(500).send({
+      isSuccessed: false,
+      message: 'サーバー側の不具合によりログアウトに失敗しました'
+    })
+  }
+})
+
 const authMailTemplateFn = pug.compileFile(
   path.resolve(__dirname, 'authMailTemplate.pug')
 )
 
 router.post('/signup', async function(req, res) {
   try {
+    if (await User.isExist(req.body.name, req.body.email)) {
+      return res.status(202).json({
+        isSuccessed: false,
+        messages: '既存のユーザーと同じ情報を持っています'
+      })
+    }
+
     const tokenOrError = await UserTmp.add(
       req.body.name,
       req.body.password,
@@ -51,13 +121,17 @@ router.post('/signup', async function(req, res) {
 })
 
 router.get('/signup/:token', async function(req, res) {
-  consola.log('complete authentication email')
   consola.info('TODO insert User from TmpUser and delte TmpUser')
 
   try {
-    const isValid = await UserTmp.isValidToken(req.params.token)
-    if (!isValid) {
+    const userInfo = await UserTmp.isValidToken(req.params.token)
+    if (!userInfo) {
       return res.send('<h1>Failed authentication user...</h1>')
+    }
+
+    const user = await User.createWithUserInfo(userInfo)
+    if (!user) {
+      throw new Error('Failed to create User...')
     }
 
     res.set('Content-Type', 'text/html')
