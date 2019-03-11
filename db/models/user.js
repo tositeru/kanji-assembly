@@ -140,8 +140,7 @@ module.exports = (sequelize, DataTypes) => {
       }
 
       const payload = {
-        name: user.name,
-        email: user.email
+        id: user.id
       }
       const rsaKey = {
         key: authToken.private,
@@ -166,8 +165,7 @@ module.exports = (sequelize, DataTypes) => {
     try {
       const user = await User.findOne({
         where: {
-          name: userData.name,
-          email: userData.email
+          id: userData.id
         }
       })
 
@@ -193,8 +191,7 @@ module.exports = (sequelize, DataTypes) => {
         return
       }
       userData = {
-        name: decoded.name,
-        email: decoded.email
+        id: decoded.id
       }
     })
     return userData
