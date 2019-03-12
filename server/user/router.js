@@ -4,8 +4,8 @@ const consola = require('consola')
 const pug = require('pug')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
-
 const { User, UserTmp } = require('../../db/database')
+const Datatype = require('./defineDatatypes')
 
 // import { resolve } from 'dns'
 
@@ -19,27 +19,66 @@ router.use((req, res, next) => {
   next()
 })
 
-function validateAuthToken(req, res, next) {
+function getAuthToken(req) {
   const token = req.body.token || req.headers['x-access-token']
   if (!token) {
-    return res.status(403).json({
-      message: '認証に失敗しました。'
-    })
+    return null
   }
-
   const userData = User.validateAuthToken(token)
+  return userData
+}
+
+/**
+ * 認証トークンが無い場合はリクエストを拒否する
+ *
+ * @param {Request} req
+ * @param {Response} res
+ * @param {*} next
+ */
+function requireAuthToken(req, res, next) {
+  const userData = getAuthToken(req)
   if (!userData) {
+    consola.error(
+      'requireAuthToken: Detect Suspicious Access...',
+      `IP=${req.ip}`,
+      `IPS=${req.ips}`
+    )
     return res.status(403).json({
       message: '認証に失敗しました。'
     })
   }
+  // リクエストにユーザーデータを付けて次のコールバックで使えるようにする
   req.userData = userData
   next()
 }
 
-router.post('/login', async function(req, res) {
+/**
+ * 認証トークンがある場合はユーザーページにリダイレクトする
+ * @param {Request} req
+ * @param {Response} res
+ * @param {*} next
+ */
+function refusalAuthToken(req, res, next) {
+  const userData = getAuthToken(req)
+  if (userData) {
+    consola.error(
+      'refusalAuthToken: Detect Suspicious Access...',
+      `IP=${req.ip}`,
+      `IPS=${req.ips}`
+    )
+    return res.redirect('/user')
+  }
+
+  next()
+}
+
+router.post('/login', refusalAuthToken, async function(req, res) {
   try {
-    const token = await User.login(req.body.email, req.body.password)
+    const loginParam = Datatype.makeLoginParameters(
+      req.body.email,
+      req.body.password
+    )
+    const token = await User.login(loginParam)
     if (!token) {
       return res.status(202).json({
         isSuccessed: false,
@@ -60,7 +99,7 @@ router.post('/login', async function(req, res) {
   }
 })
 
-router.post('/logout', validateAuthToken, async function(req, res) {
+router.post('/logout', requireAuthToken, async function(req, res) {
   try {
     const isSuccessed = await User.logout(req.userData)
     if (!isSuccessed) {
@@ -82,36 +121,68 @@ router.post('/logout', validateAuthToken, async function(req, res) {
   }
 })
 
+router.delete('/delete', requireAuthToken, async function(req, res) {
+  try {
+    const isSuccessed = await User.delete(req.userData)
+    if (!isSuccessed) {
+      return res.status(202).json({
+        isSuccessed: false,
+        message: 'ユーザーの削除に失敗しました'
+      })
+    }
+
+    return res.json({
+      isSuccessed: true
+    })
+  } catch (error) {
+    consola.error(error)
+    return res.status(500).send({
+      isSuccessed: false,
+      message: 'サーバー側の不具合によりユーザーの削除に失敗しました'
+    })
+  }
+})
+
 const authMailTemplateFn = pug.compileFile(
   path.resolve(__dirname, 'authMailTemplate.pug')
 )
 
-router.post('/signup', async function(req, res) {
+router.post('/signup', refusalAuthToken, async function(req, res) {
   try {
-    if (await User.isExist(req.body.name, req.body.email)) {
+    const signupParam = Datatype.makeSignupParameters(
+      req.body.name,
+      req.body.email,
+      req.body.password,
+      {
+        notSendMail: req.body.notSendMail
+      }
+    )
+    if (await User.isExist(signupParam.name, signupParam.email)) {
       return res.status(202).json({
         isSuccessed: false,
         messages: '既存のユーザーと同じ情報を持っています'
       })
     }
 
-    const tokenOrError = await UserTmp.add(
-      req.body.name,
-      req.body.password,
-      req.body.email
-    )
+    const tokenOrError = await UserTmp.add(signupParam)
     if (typeof tokenOrError !== 'string') {
       return res.status(202).json({
         isSuccessed: false,
         messages: tokenOrError
       })
     }
-    const token = tokenOrError
-    const htmlContent = authMailTemplateFn({
-      url: `https://localhost:3000/user/signup/${token}`
-    })
-    const sender = new MailSender('漢字組み立て工場　ユーザー確認', htmlContent)
-    sender.send(`${req.body.name} <${req.body.email}>`)
+
+    if (!signupParam.notSendMail) {
+      const token = tokenOrError
+      const htmlContent = authMailTemplateFn({
+        url: `https://localhost:3000/user/signup/${token}`
+      })
+      const sender = new MailSender(
+        '漢字組み立て工場　ユーザー確認',
+        htmlContent
+      )
+      sender.send(`${req.body.name} <${req.body.email}>`)
+    }
 
     return res.json({ isSuccessed: true })
   } catch (error) {
@@ -120,13 +191,11 @@ router.post('/signup', async function(req, res) {
   }
 })
 
-router.get('/signup/:token', async function(req, res) {
-  consola.info('TODO insert User from TmpUser and delte TmpUser')
-
+router.post('/signup/:token', refusalAuthToken, async function(req, res) {
   try {
     const userInfo = await UserTmp.isValidToken(req.params.token)
     if (!userInfo) {
-      return res.send('<h1>Failed authentication user...</h1>')
+      throw new Error('Failed to create User...')
     }
 
     const user = await User.createWithUserInfo(userInfo)
@@ -139,7 +208,7 @@ router.get('/signup/:token', async function(req, res) {
   } catch (error) {
     consola.error(error)
     res.set('Content-Type', 'text/html')
-    return res.send('<h1>Failed authentication user...</h1>')
+    return res.status(202).send('<h1>Failed authentication user...</h1>')
   }
 })
 

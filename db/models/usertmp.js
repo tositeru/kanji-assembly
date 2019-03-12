@@ -2,67 +2,34 @@
 const crypto = require('crypto')
 const moment = require('moment')
 const consola = require('consola')
+const { TABLE_DEFINETION } = require('../tables/user-tmps.js')
 const commonCrypt = require('./commonCrypt')
 
 module.exports = (sequelize, DataTypes) => {
-  const UserTmp = sequelize.define(
-    'UserTmp',
-    {
-      name: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-        validate: {
-          len: [3, 64]
-        }
-      },
-      password: {
-        type: DataTypes.STRING,
-        validate: {
-          min: 8
-        }
-      },
-      password2: {
-        type: DataTypes.STRING,
-        validate: {
-          min: 8
-        }
-      },
-      email: {
-        type: DataTypes.STRING,
-        validate: {
-          isEmail: true,
-          max: 255
-        }
-      },
-      token: {
-        type: DataTypes.STRING,
-        isUUID: 4
-      }
-    },
-    {
-      hooks: {
-        beforeUpsert(values, options) {
-          consola.log('User: Add UserTmp: ')
-        }
-      }
-    }
-  )
+  const UserTmp = sequelize.define('UserTmp', TABLE_DEFINETION, {})
   UserTmp.associate = async function(models) {}
 
-  UserTmp.add = async (name, password, email) => {
+  /**
+   * 仮ユーザー登録を行う
+   * @param {server/user/defineDatatype LoginParam} signupParam
+   */
+  UserTmp.add = async signupParam => {
     try {
       const token = crypto.randomBytes(64).toString('hex')
-      const encryptPassword = commonCrypt.encryptPassword(password)
+      const encryptPassword = commonCrypt.encryptPassword(signupParam.password)
       await UserTmp.upsert({
-        name: name,
+        name: signupParam.name,
         password: encryptPassword.hashedPassword,
         password2: encryptPassword.salt,
-        email: email,
+        email: signupParam.email,
         token: token
       })
 
       // 他のエラーも一緒に判定できるようにあとで行っている
-      if (password.length < 8 || password.length > 255) {
+      if (
+        signupParam.password.length < 8 ||
+        signupParam.password.length > 255
+      ) {
         throw new RangeError('使用できないパスワードの長さを登録に使用しました')
       }
       return token
@@ -85,12 +52,17 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
       // パスワードはハッシュ化しているので直接確認する
-      if (password.length < 8 || password.length > 255) {
+      if (
+        signupParam.password.length < 8 ||
+        signupParam.password.length > 255
+      ) {
         errorMessages.password = '使用できないパスワードを登録に使用しました'
       }
       consola.error(
-        `ユーザー登録失敗. name=${name},email=${email},password=${password};`,
-        errorMessages
+        `ユーザー登録失敗. name=${signupParam.name},email=${
+          signupParam.email
+        },password=${signupParam.password};`,
+        error
       )
       return errorMessages
     }
