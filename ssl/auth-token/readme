@@ -1,0 +1,8 @@
+ここにユーザー認証用トークンに使用するSSLキーをおいてください。
+
+private.pem
+public.pub
+
+openssl genrsa -out ssl/auth-token/private.key -aes256 4096
+openssl rsa -in ssl/auth-token/private.key -out ssl/auth-token/public.pub -pubout
+

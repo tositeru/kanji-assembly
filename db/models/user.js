@@ -70,12 +70,14 @@ module.exports = (sequelize, DataTypes) => {
 
   const authToken = {
     private: fs.readFileSync(
-      path.resolve(__dirname, '../../ssl/auth-token/auth-token.pem')
+      path.resolve(__dirname, '../../ssl/auth-token/private.key')
     ),
     public: fs.readFileSync(
-      path.resolve(__dirname, '../../ssl/auth-token/auth-token.pub')
+      path.resolve(__dirname, '../../ssl/auth-token/public.pub')
     ),
-    passphrase: 'HE=S:SB#2!wRs3/I8&tX]Hyf^DiJg8',
+    passphrase: fs.readFileSync(
+      path.resolve(__dirname, '../../ssl/auth-token/passphrase')
+    ),
     expiredSecond: 60 * 60 * 24 * 30
   }
 
