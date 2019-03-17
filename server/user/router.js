@@ -74,10 +74,17 @@ function refusalAuthToken(req, res, next) {
 
 router.post('/login', refusalAuthToken, async function(req, res) {
   try {
-    const loginParam = Datatype.makeLoginParameters(
+    const loginParam = new Datatype.LoginParameters(
       req.body.email,
       req.body.password
     )
+    if (!loginParam.doValid) {
+      return res.status(202).json({
+        isSuccessed: false,
+        message: 'パラメータが正しくありません'
+      })
+    }
+
     const token = await User.login(loginParam)
     if (!token) {
       return res.status(202).json({
@@ -143,20 +150,32 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
   }
 })
 
+//* * 認証用メールのテンプレート*/
 const authMailTemplateFn = pug.compileFile(
   path.resolve(__dirname, 'authMailTemplate.pug')
 )
 
+/**
+ * ユーザー登録のAPI
+ * req.bodyにはDatatype.SignupParametersに渡すことができるパラメータがあることを期待する
+ */
 router.post('/signup', refusalAuthToken, async function(req, res) {
   try {
-    const signupParam = Datatype.makeSignupParameters(
+    const signupParam = new Datatype.SignupParameters(
       req.body.name,
       req.body.email,
       req.body.password,
       {
-        notSendMail: req.body.notSendMail
+        doSendMail: req.body.doSendMail
       }
     )
+    if (!signupParam.doValid()) {
+      return res.status(202).json({
+        isSuccessed: false,
+        messages: 'パラメータが正しくありません'
+      })
+    }
+
     if (await User.isExist(signupParam.name, signupParam.email)) {
       return res.status(202).json({
         isSuccessed: false,
@@ -172,7 +191,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
       })
     }
 
-    if (!signupParam.notSendMail) {
+    if (signupParam.doSendMail) {
       const token = tokenOrError
       const htmlContent = authMailTemplateFn({
         url: `https://localhost:3000/user/signup/${token}`

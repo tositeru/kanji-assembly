@@ -51,10 +51,10 @@ async function init() {
  */
 async function createUser(name, email, password) {
   try {
-    const param = UserDatatype.makeSignupParameters(name, email, password, {
+    const param = new UserDatatype.SignupParameters(name, email, password, {
       notSendMail: true // データベースを直接見るのでメールは送らない
     })
-    await axios.post('user/signup', param)
+    await axios.post('user/signup', param.toObj())
 
     // query token by direct database
     const tmpUser = await UserTmp.findOne({
@@ -71,8 +71,8 @@ async function createUser(name, email, password) {
       }
     })
 
-    const loginParam = UserDatatype.makeLoginParameters(email, password)
-    const loginResposnse = await axios.post('user/login', loginParam)
+    const loginParam = new UserDatatype.LoginParameters(email, password)
+    const loginResposnse = await axios.post('user/login', loginParam.toObj())
     return loginResposnse.data.token
   } catch (error) {
     assert.ok(false, `Failed to create user... ${error}`)
@@ -115,18 +115,21 @@ const tests = [
     {
       // POST /user/signup with valid parameters
       // POST /user/signup/:token with valid parameters
-      const param = UserDatatype.makeSignupParameters(
+      const param = new UserDatatype.SignupParameters(
         userData.name,
         userData.email,
         userData.password,
         {
-          notSendMail: true // データベースを直接見るのでメールは送らない
+          doSendMail: false // データベースを直接見るのでメールは送らない
         }
       )
       consola.log('request user/signup')
-      const res = await axios.post('user/signup', param)
-      assert.ok(res.data.isSuccessed, 'invalid response parameter')
-  
+      const res = await axios.post('user/signup', param.toObj())
+      assert.ok(
+        res.data.isSuccessed,
+        `invalid response parameter... msg=${res.data.messages}`
+      )
+
       // query token by direct database
       const tmpUser = await UserTmp.findOne({
         where: {
@@ -135,7 +138,7 @@ const tests = [
         }
       })
       const token = tmpUser.token
-  
+
       consola.log('request user/signup/<valid_token>')
       const signupResponse = await axios.post(`user/signup/${token}`, {
         headers: {
@@ -152,17 +155,20 @@ const tests = [
     // POST /user/logout with auth token
     {
       consola.log('request user/login')
-      const loginParam = UserDatatype.makeLoginParameters(
+      const loginParam = new UserDatatype.LoginParameters(
         userData.email,
         userData.password
       )
-      const loginResposnse = await axios.post('user/login', loginParam)
-      assert.ok(loginResposnse.status === 200, 'Falied to login...')
+      const loginResposnse = await axios.post('user/login', loginParam.toObj())
+      assert.ok(
+        loginResposnse.status === 200,
+        `Falied to login... msg=${loginResposnse.data.message}`
+      )
       assert.ok(
         loginResposnse.data.token,
         'Falied to login by invalid token...'
       )
-  
+
       consola.log('request user/logout')
       const logoutResposnse = await axios.post('user/logout', {
         token: loginResposnse.data.token
@@ -172,11 +178,11 @@ const tests = [
 
     // DELETE /user/delete with auth token
     {
-      const loginParam = UserDatatype.makeLoginParameters(
+      const loginParam = new UserDatatype.LoginParameters(
         userData.email,
         userData.password
       )
-      const loginResposnse = await axios.post('user/login', loginParam)
+      const loginResposnse = await axios.post('user/login', loginParam.toObj())
       assert.ok(loginResposnse.status === 200, 'Falied to login...')
       assert.ok(
         loginResposnse.data.token,
@@ -225,8 +231,8 @@ const tests = [
         }
       })
       assert.ok(
-        noneParamRes.status.name && noneParamRes.status.email,
-        'failed to validate the none param...'
+        exsitBothRes.status.name && exsitBothRes.status.email,
+        'failed to validate the exsit params...'
       )
     }
 
@@ -279,9 +285,12 @@ const tests = [
         'failed to validate the same email at part 2...'
       )
     }
+  }),
+  new Utils.Test('test invalid post user/signup', async test => {
+    // POST /user/signup with void parameters
+    // POST /user/signup with invalid parameters
+    //const voidParamRes = await axios.post({})
   })
-  // POST /user/signup with void parameters
-  // POST /user/signup with invalid parameters
 
   // POST /user/login with void parameters
   // POST /user/login with invalid parameters

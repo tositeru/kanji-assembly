@@ -3,6 +3,7 @@ const crypto = require('crypto')
 const moment = require('moment')
 const consola = require('consola')
 const { TABLE_DEFINETION } = require('../tables/user-tmps.js')
+// const ServerDataTypes = require('../../server/user/defineDatatypes')
 const commonCrypt = require('./commonCrypt')
 
 module.exports = (sequelize, DataTypes) => {
@@ -11,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
 
   /**
    * 仮ユーザー登録を行う
-   * @param {server/user/defineDatatype LoginParam} signupParam
+   * @param {ServerDataTypes.SignupParameters} signupParam
    */
   UserTmp.add = async signupParam => {
     try {
