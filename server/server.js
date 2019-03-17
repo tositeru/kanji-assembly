@@ -30,8 +30,7 @@ module.exports = async function startServer(nuxtConfig) {
   app.use(nuxt.render)
 
   // Listen the server
-  const isTest = process.env.IS_TEST === 'true'
-  if (isTest) {
+  if (process.env.NODE_ENV === 'test') {
     app.listen(3003, host)
     consola.ready({
       message: `For Running Test Version!! Server listening on http://${host}:3003`,

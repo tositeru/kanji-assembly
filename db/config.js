@@ -27,11 +27,9 @@ module.exports = {
   test: test,
   production: production,
   get() {
-    if (process.env.IS_TEST) {
-      return test
-    }
-
     switch (process.env.NODE_ENV) {
+      case 'test':
+        return test
       case 'production':
         return production
       default:

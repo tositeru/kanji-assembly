@@ -6,8 +6,8 @@
   "author": "tositeru",
   "scripts": {
     "build": "nuxt build",
-    "start-test-server": "cross-env NODE_ENV=development IS_TEST=true nodemon server/index.js --watch server --watch db",
-    "test": "cross-env NODE_ENV=develop IS_TEST=true node test-oreore/user.test.js",
+    "start-test-server": "cross-env NODE_ENV=test nodemon server/index.js --watch server --watch db",
+    "test": "cross-env NODE_ENV=test node test-oreore/user.test.js",
     "lint": "eslint --fix --ext .js,.vue --ignore-path .gitignore .",
     "dev": "cross-env NODE_ENV=development nodemon server/index.js --watch server --watch db",
     "generate": "nuxt generate",

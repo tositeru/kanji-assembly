@@ -9,16 +9,14 @@ const consola = require('consola')
 const shell = require('shelljs')
 const sleep = require('sleep')
 const UserDatatype = require('../server/user/defineDatatypes')
-
 const { UserTmp } = require('../db/database')
+const Utils = require('./utils')
 
 axios.defaults.baseURL = 'http://localhost:3003'
-// axios.defaults.transformRequest = [
-//   (data, headers)=>{
-//     consola.log(headers, data)
-//   }
-// ]
 
+/**
+ * テスト環境の初期化
+ */
 async function init() {
   // データベースの状態を初期化する
   shell.exec('yarn sequelize db:migrate:undo:all --env=test')
@@ -43,25 +41,80 @@ async function init() {
 
 // test 定義
 
-function makeTest(name, testFunction) {
-  return {
-    name: name,
-    func: testFunction
+/**
+ * テスト用にユーザーを作成する
+ * 内部の処理はすべて正常に動くことを前提にしているので、関連するテストに失敗していた場合は実行結果を保証できません
+ * @param {string} name
+ * @param {string} email
+ * @param {string} password
+ * @return {string|null} auth-token
+ */
+async function createUser(name, email, password) {
+  try {
+    const param = UserDatatype.makeSignupParameters(name, email, password, {
+      notSendMail: true // データベースを直接見るのでメールは送らない
+    })
+    await axios.post('user/signup', param)
+
+    // query token by direct database
+    const tmpUser = await UserTmp.findOne({
+      where: {
+        name: name,
+        email: email
+      }
+    })
+    const token = tmpUser.token
+
+    await axios.post(`user/signup/${token}`, {
+      headers: {
+        'Content-Type': 'text/html'
+      }
+    })
+
+    const loginParam = UserDatatype.makeLoginParameters(email, password)
+    const loginResposnse = await axios.post('user/login', loginParam)
+    return loginResposnse.data.token
+  } catch (error) {
+    assert.ok(false, `Failed to create user... ${error}`)
+    return null
   }
 }
 
+/**
+ * ユーザートークンからユーザーを削除する
+ * @param {string} userToken
+ */
+async function deleteUser(userToken) {
+  try {
+    await axios.delete('user/delete', {
+      data: {
+        token: userToken
+      },
+      headers: {
+        'Content-Length': userToken.length
+      }
+    })
+
+    return true
+  } catch (error) {
+    assert.ok(false, `Failed to delete user... ${error}`)
+    return false
+  }
+}
+
+/** @type {Array<Test>} */
 const tests = [
   // 成功パターン
-  makeTest('success pattern', async test => {
+  new Utils.Test('success pattern', async test => {
     const userData = {
       name: 'Tom',
       email: 'tom@mail.com',
       password: '1234567890'
     }
 
-    // POST /user/signup with valid parameters
-    // POST /user/signup/:token with valid parameters
-    try {
+    {
+      // POST /user/signup with valid parameters
+      // POST /user/signup/:token with valid parameters
       const param = UserDatatype.makeSignupParameters(
         userData.name,
         userData.email,
@@ -73,7 +126,7 @@ const tests = [
       consola.log('request user/signup')
       const res = await axios.post('user/signup', param)
       assert.ok(res.data.isSuccessed, 'invalid response parameter')
-
+  
       // query token by direct database
       const tmpUser = await UserTmp.findOne({
         where: {
@@ -82,7 +135,7 @@ const tests = [
         }
       })
       const token = tmpUser.token
-
+  
       consola.log('request user/signup/<valid_token>')
       const signupResponse = await axios.post(`user/signup/${token}`, {
         headers: {
@@ -93,13 +146,11 @@ const tests = [
         signupResponse.status === 200,
         'invalid response parameter at signup/:token'
       )
-    } catch (error) {
-      assert.ok(false, `Failed to signup... ${error}`)
     }
 
     // POST /user/login with vaild parameters
     // POST /user/logout with auth token
-    try {
+    {
       consola.log('request user/login')
       const loginParam = UserDatatype.makeLoginParameters(
         userData.email,
@@ -111,18 +162,16 @@ const tests = [
         loginResposnse.data.token,
         'Falied to login by invalid token...'
       )
-
+  
       consola.log('request user/logout')
       const logoutResposnse = await axios.post('user/logout', {
         token: loginResposnse.data.token
       })
       assert.ok(logoutResposnse.status === 200, 'Failed to logout...')
-    } catch (error) {
-      assert.ok(false, `Failed to login/logout... ${error}`)
     }
 
     // DELETE /user/delete with auth token
-    try {
+    {
       const loginParam = UserDatatype.makeLoginParameters(
         userData.email,
         userData.password
@@ -142,12 +191,15 @@ const tests = [
           'Content-Length': loginResposnse.data.token.length
         }
       })
+      assert.ok(deleteResposnse.status === 200, 'Failed to delete user...')
+    }
+  }),
 
       assert.ok(deleteResposnse.status === 200, 'Failed to delete user...')
     } catch (error) {
       assert.ok(false, `Failed to delete user... ${error}`)
-    }
-  })
+        }
+      })
 
   // POST /user/signup with void parameters
   // POST /user/signup with invalid parameters
@@ -163,22 +215,4 @@ const tests = [
   // POST /user/delete without invalid auth token
 ]
 
-async function run() {
-  await init()
-
-  // テスト実行
-  try {
-    for (const test of tests) {
-      consola.log(`Start ${test.name}`)
-      await test.func(test)
-      consola.success(`Success ${test.name}!!`)
-    }
-  } catch (error) {
-    consola.error(error)
-    consola.error(`Failed to tests...`)
-  }
-
-  consola.log('!!!Complete test!!!')
-}
-
-run()
+Utils.run(tests, init)
