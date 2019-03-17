@@ -42,6 +42,26 @@ async function init() {
 // test 定義
 
 /**
+ * テスト用にメール認証を行っていないユーザーを作成する
+ * 内部の処理はすべて正常に動くことを前提にしているので、関連するテストに失敗していた場合は実行結果を保証できません
+ * @param {string} name
+ * @param {string} email
+ * @param {string} password
+ * @return {string|null} auth-token
+ */
+async function createUserReservingToSignup(name, email, password) {
+  try {
+    const param = new UserDatatype.SignupParameters(name, email, password, {
+      notSendMail: true // データベースを直接見るのでメールは送らない
+    })
+    await axios.post('user/signup', param.toObj())
+  } catch (error) {
+    assert.ok(false, `Failed to create user... ${error}`)
+    return null
+  }
+}
+
+/**
  * テスト用にユーザーを作成する
  * 内部の処理はすべて正常に動くことを前提にしているので、関連するテストに失敗していた場合は実行結果を保証できません
  * @param {string} name
@@ -287,9 +307,86 @@ const tests = [
     }
   }),
   new Utils.Test('test invalid post user/signup', async test => {
+    const tomData = UserDatatype.SignupParameters(
+      'Tom',
+      'tom@mail.com',
+      'tomtomtomtom',
+      { doSendMail: false }
+    )
+    const tomToken = await createUser(
+      tomData.name,
+      tomData.email,
+      tomData.password
+    )
+    test.pushDisposeObject(tomToken, deleteUser)
+
+    const reservingUserData = UserDatatype.SignupParameters(
+      'Sara',
+      'sara@mail.com',
+      'sarasrarsara'
+    )
+    await createUserReservingToSignup(
+      reservingUserData.name,
+      reservingUserData.email,
+      reservingUserData.password
+    )
+
     // POST /user/signup with void parameters
-    // POST /user/signup with invalid parameters
-    //const voidParamRes = await axios.post({})
+    {
+      const voidParamRes = await axios.post('user/signup', {})
+      assert.ok(
+        !voidParamRes.data.isSuccessed,
+        'failed to reject void parameters...'
+      )
+    }
+    // POST /user/signup with already used name in parameters
+    {
+      const param = UserDatatype.SignupParameters(
+        tomData.name,
+        'hoge@mail.com.com',
+        'tomotmotmo'
+      )
+      const sameNameRes = await axios.post('user/signup', param)
+      assert.ok(
+        !sameNameRes.data.isSuccessed,
+        'failed to reject the parameter including the already used name...'
+      )
+
+      const param2 = UserDatatype.SignupParameters(
+        reservingUserData.name,
+        'hoge@mail.com.com',
+        'tomotmotmo'
+      )
+      const sameNameRes2 = await axios.post('user/signup', param2)
+      assert.ok(
+        !sameNameRes2.data.isSuccessed,
+        'failed to reject the parameter including the already used name in Usertmp...'
+      )
+    }
+    // POST /user/signup with already used email in parameters
+    {
+      const param = UserDatatype.SignupParameters(
+        'Sum',
+        tomData.email,
+        'tomotmotmo'
+      )
+      const sameEmailRes = await axios.post('user/signup', param)
+      assert.ok(
+        !sameEmailRes.data.isSuccessed,
+        'failed to reject the parameter including the already used email...'
+      )
+
+      const param2 = UserDatatype.SignupParameters(
+        'Sum',
+        reservingUserData.email,
+        'tomotmotmo'
+      )
+      const sameEmailRes2 = await axios.post('user/signup', param2)
+      assert.ok(
+        !sameEmailRes2.data.isSuccessed,
+        'failed to reject the parameter including the already used email in Usertmp...'
+      )
+    }
   })
 
   // POST /user/login with void parameters
