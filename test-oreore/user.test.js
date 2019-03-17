@@ -194,13 +194,92 @@ const tests = [
       assert.ok(deleteResposnse.status === 200, 'Failed to delete user...')
     }
   }),
+  new Utils.Test('test user/check', async test => {
+    const userData = {
+      name: 'Tom',
+      email: 'tom@mail.com',
+      password: '1234567890'
+    }
+    const tokenTom = await createUser(
+      userData.name,
+      userData.email,
+      userData.password
+    )
+    test.pushDisposeObject(tokenTom, deleteUser)
 
-      assert.ok(deleteResposnse.status === 200, 'Failed to delete user...')
-    } catch (error) {
-      assert.ok(false, `Failed to delete user... ${error}`)
+    {
+      const noneParamRes = await axios.get('user/check', {
+        param: {}
+      })
+      assert.ok(
+        !noneParamRes.status.name && !noneParamRes.status.email,
+        'failed to validate the none param...'
+      )
+    }
+
+    {
+      const exsitBothRes = await axios.get('user/check', {
+        param: {
+          name: userData.name,
+          email: userData.email
         }
       })
+      assert.ok(
+        noneParamRes.status.name && noneParamRes.status.email,
+        'failed to validate the none param...'
+      )
+    }
 
+    {
+      const nameRes = await axios.get('user/check', {
+        param: {
+          name: userData.name
+        }
+      })
+      assert.ok(
+        nameRes.status.name && !nameRes.status.email,
+        'failed to validate the same name...'
+      )
+    }
+
+    {
+      const nameRes2 = await axios.get('user/check', {
+        param: {
+          name: userData.name,
+          email: 'hoge@mail.com.com'
+        }
+      })
+      assert.ok(
+        nameRes2.status.name && !nameRes2.status.email,
+        'failed to validate the same name at part 2...'
+      )
+    }
+
+    {
+      const emailRes = await axios.get('user/check', {
+        param: {
+          email: userData.email
+        }
+      })
+      assert.ok(
+        !emailRes.status.name && emailRes.status.email,
+        'failed to validate the same email...'
+      )
+    }
+
+    {
+      const emailRes2 = await axios.get('user/check', {
+        param: {
+          name: 'aoajodjapodjwopjfepo',
+          email: userData.email
+        }
+      })
+      assert.ok(
+        !emailRes2.status.name && emailRes2.status.email,
+        'failed to validate the same email at part 2...'
+      )
+    }
+  })
   // POST /user/signup with void parameters
   // POST /user/signup with invalid parameters
 
