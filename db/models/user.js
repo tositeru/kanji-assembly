@@ -81,6 +81,21 @@ module.exports = (sequelize, DataTypes) => {
     expiredSecond: 60 * 60 * 24 * 30
   }
 
+  User.createAuthToken = userId => {
+    const payload = {
+      id: userId
+    }
+    const rsaKey = {
+      key: AUTH_TOKEN.private,
+      passphrase: AUTH_TOKEN.passphrase
+    }
+    const token = jwt.sign(payload, rsaKey, {
+      algorithm: JWT_ALGORITHM,
+      expiresIn: AUTH_TOKEN.expiredSecond // 30日間
+    })
+    return token
+  }
+
   /**
    * ログイン処理を行う
    * @param {server/user/defineDatatype LoginParam} loginParam
@@ -105,17 +120,7 @@ module.exports = (sequelize, DataTypes) => {
         return null
       }
 
-      const payload = {
-        id: user.id
-      }
-      const rsaKey = {
-        key: authToken.private,
-        passphrase: authToken.passphrase
-      }
-      const token = jwt.sign(payload, rsaKey, {
-        algorithm: JWT_ALGORITHM,
-        expiresIn: authToken.expiredSecond // 30日間
-      })
+      const token = User.createAuthToken(user.id)
 
       user.setDataValue('status', User.STATUS_LOGIN)
       await user.save()
