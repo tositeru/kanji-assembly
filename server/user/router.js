@@ -33,6 +33,14 @@ const logger = new Logger('API /user')
 function logError(req, message) {
   logger.error(req.originalUrl, `IP='${req.ip},IPS='${req.ips}'`, message)
 }
+/**
+ *
+ * @param {Request} req
+ * @param {string} message
+ */
+function logInfo(req, message) {
+  logger.info(req.originalUrl, `IP='${req.ip},IPS='${req.ips}'`, message)
+}
 
 function getAuthToken(req) {
   const token = req.body.token || req.headers['x-access-token']
@@ -235,7 +243,7 @@ router.post('/signup/:token', refusalAuthToken, async function(req, res) {
     if (!user) {
       throw new Error('Failed to create User...')
     }
-
+    logInfo(req, `create user name=${user.name},email=${user.email}`)
     res.set('Content-Type', 'text/html')
     return res.send('<h1>Success authentication user!</h1>')
   } catch (error) {
