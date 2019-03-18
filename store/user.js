@@ -27,7 +27,12 @@ export const actions = {
     commit('setAuth', auth)
   },
 
-  async signup({ commit }, { name, email, password }) {
+  async signup({ state, commit }, { name, email, password }) {
+    if (state.auth) {
+      consola.error('User Signup', 'Invalid Operation')
+      return null
+    }
+
     const res = await axios.post('/user/signup', {
       name: name,
       email: email,
@@ -37,6 +42,11 @@ export const actions = {
   },
 
   async login({ commit }, { email, password }) {
+    if (state.auth) {
+      consola.error('User Login', 'Invalid Operation')
+      return null
+    }
+
     try {
       const res = await axios.post('/user/login', {
         email: email,
@@ -57,6 +67,11 @@ export const actions = {
     }
   },
   async logout({ state, commit }) {
+    if (!state.auth) {
+      consola.error('User Logout', 'Invalid Operation')
+      return null
+    }
+
     try {
       await axios.post('/user/logout', {
         token: state.auth

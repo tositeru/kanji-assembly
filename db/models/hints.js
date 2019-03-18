@@ -1,44 +1,34 @@
 'use strict'
+const { TABLE_DEFINETION } = require('../tables/hints.js')
+
 module.exports = (sequelize, DataTypes) => {
-  const Hints = sequelize.define(
-    'Hints',
-    {
-      question_id: DataTypes.INTEGER,
-      level: DataTypes.TINYINT,
-      text: DataTypes.TEXT,
-      opened: {
-        type: DataTypes.TINYINT,
-        defaultValue: 0
-      }
-    },
-    {
-      getterMethods: {
-        question_id() {
-          return this.getDataValue('question_id')
-        },
-        level() {
-          return this.getDataValue('level')
-        },
-        text() {
-          return this.getDataValue('text')
-        },
-        opened() {
-          return this.getDataValue('opened')
-        },
-        toClientObj() {
-          const obj = {
-            id: this.id,
-            level: this.level,
-            opened: this.opened !== 0
-          }
-          if (this.opened) {
-            obj.text = this.text
-          }
-          return obj
+  const Hints = sequelize.define('Hints', TABLE_DEFINETION, {
+    getterMethods: {
+      question_id() {
+        return this.getDataValue('question_id')
+      },
+      level() {
+        return this.getDataValue('level')
+      },
+      text() {
+        return this.getDataValue('text')
+      },
+      opened() {
+        return this.getDataValue('opened')
+      },
+      toClientObj() {
+        const obj = {
+          id: this.id,
+          level: this.level,
+          opened: this.opened !== 0
         }
+        if (this.opened) {
+          obj.text = this.text
+        }
+        return obj
       }
     }
-  )
+  })
   Hints.associate = function(models) {
     // associations can be defined here
   }

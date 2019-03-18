@@ -10,7 +10,7 @@ const test = {
   database: 'database_test',
   host: '127.0.0.1',
   dialect: 'sqlite',
-  storage: 'db/database.db',
+  storage: 'db/database.test.db',
   operatorsAliases: false
 }
 const production = {
@@ -28,10 +28,10 @@ module.exports = {
   production: production,
   get() {
     switch (process.env.NODE_ENV) {
-      case 'production':
-        return production
       case 'test':
         return test
+      case 'production':
+        return production
       default:
         return development
     }

@@ -1,14 +1,8 @@
 'use strict'
+const { TABLE_DEFINETION } = require('../tables/kanji-strokes.js')
+
 module.exports = (sequelize, DataTypes) => {
-  const KanjiStrokes = sequelize.define(
-    'KanjiStrokes',
-    {
-      kanji: DataTypes.CHAR,
-      stroke_kind: DataTypes.TINYINT,
-      stroke_no: DataTypes.TINYINT
-    },
-    {}
-  )
+  const KanjiStrokes = sequelize.define('KanjiStrokes', TABLE_DEFINETION, {})
   KanjiStrokes.associate = function(models) {
     // associations can be defined here
   }
