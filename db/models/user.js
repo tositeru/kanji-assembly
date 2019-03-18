@@ -1,11 +1,13 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
-const consola = require('consola')
 const jwt = require('jsonwebtoken')
 const uuid = require('uuid/v4')
 const { TABLE_DEFINETION } = require('../tables/users.js')
+const Logger = require('../../src/log')
 const CommonCrypt = require('./commonCrypt')
+
+const logger = new Logger('DB Users', 'debug')
 
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', TABLE_DEFINETION, {
@@ -49,7 +51,11 @@ module.exports = (sequelize, DataTypes) => {
 
   User.createWithUserInfo = async function(userInfo) {
     if (await User.isExist(userInfo.name, userInfo.email)) {
-      consola.error('Failed to add user because the user already exists...')
+      logger.error(
+        'Signup',
+        `name=${userInfo.name} email=${userInfo.email}`,
+        'duplicate parameter...'
+      )
       return null
     }
     try {
@@ -61,14 +67,24 @@ module.exports = (sequelize, DataTypes) => {
         password2: userInfo.password2,
         status: User.STATUS_LOGOUT
       })
+
+      logger.info(
+        'Signup',
+        `id=${user.id} name=${user.name} email=${user.email}`,
+        ''
+      )
       return user
     } catch (error) {
-      consola.error('Failed to add User...', error)
+      logger.error(
+        'Signup',
+        `name=${userInfo.name} email=${userInfo.email}`,
+        error
+      )
       return null
     }
   }
 
-  const authToken = {
+  const AUTH_TOKEN = {
     private: fs.readFileSync(
       path.resolve(__dirname, '../../ssl/auth-token/private.key')
     ),
@@ -108,7 +124,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       })
       if (!user) {
-        consola.error('Failed to login user because unknown user')
+        logger.error('Login', `email=${loginParam.email}`, 'unknown user')
         return null
       }
       const encryptPassword = CommonCrypt.encryptPassword(
@@ -116,7 +132,7 @@ module.exports = (sequelize, DataTypes) => {
         user.password2
       )
       if (encryptPassword.hashedPassword !== user.password) {
-        consola.error('Failed to login user because invalid password')
+        logger.error('Login', `email=${loginParam.email}`, 'invalid password')
         return null
       }
 
@@ -125,9 +141,14 @@ module.exports = (sequelize, DataTypes) => {
       user.setDataValue('status', User.STATUS_LOGIN)
       await user.save()
 
+      logger.info(
+        'Login',
+        `id=${user.id} name=${user.name} email=${user.email}`
+      )
+
       return token
     } catch (error) {
-      consola.error('Failed to login user', error)
+      logger.error('Login', `email=${loginParam.email}`, error)
       return null
     }
   }
@@ -136,19 +157,24 @@ module.exports = (sequelize, DataTypes) => {
     try {
       const user = await User.findOne({
         where: {
-          id: userData.id
+          id: userData.id,
+          status: User.STATUS_LOGIN
         }
       })
       if (!user) {
-        consola.error('Not Found user at logout...', `user id=${userData.id}`)
+        logger.error('Logout', `user id=${userData.id}`, 'not find user')
         return false
       }
       user.setDataValue('status', User.STATUS_LOGOUT)
       await user.save()
 
+      logger.info(
+        `Logout`,
+        `id=${user.id} name=${user.name} email=${user.email}`
+      )
       return true
     } catch (error) {
-      consola.error('Occur error at logout...', error)
+      logger.error('Logout', `id=${userData.id}`, error)
       return false
     }
   }
@@ -161,15 +187,20 @@ module.exports = (sequelize, DataTypes) => {
         }
       })
       if (!user) {
-        consola.error('Not Found user at delete...', `user id=${userData.id}`)
+        logger.error('Delete', `user id=${userData.id} `, 'not find user')
         return false
       }
       user.setDataValue('status', User.STATUS_LOCKED)
       await user.destroy()
 
+      logger.info(
+        'Delete',
+        `id=${user.id} name=${user.name} email=${user.email}`
+      )
+
       return true
     } catch (error) {
-      consola.error('Occur error at delete...', error)
+      logger.error('Delete', `user id=${userData.id}`, error)
       return false
     }
   }
@@ -178,11 +209,11 @@ module.exports = (sequelize, DataTypes) => {
     let userData = null
     const options = {
       algorithms: [JWT_ALGORITHM],
-      maxAge: authToken.expiredSecond
+      maxAge: AUTH_TOKEN.expiredSecond
     }
-    jwt.verify(token, authToken.public, options, (err, decoded) => {
+    jwt.verify(token, AUTH_TOKEN.public, options, (err, decoded) => {
       if (err) {
-        consola.error('Invalid User Auth Token...', err)
+        logger.error('Auth Token', '', err)
         return
       }
       userData = {

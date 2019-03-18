@@ -1,16 +1,20 @@
 const path = require('path')
 const express = require('express')
-const consola = require('consola')
 const pug = require('pug')
+const log4js = require('log4js')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
 const { User, UserTmp } = require('../../db/database')
+const Logger = require('../../src/log')
 const Datatype = require('./defineDatatypes')
 
 // import { resolve } from 'dns'
 
 const router = express.Router()
 const app = express()
+
+app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }))
+
 router.use((req, res, next) => {
   Object.setPrototypeOf(req, app.request)
   Object.setPrototypeOf(res, app.response)
@@ -18,6 +22,17 @@ router.use((req, res, next) => {
   res.req = req
   next()
 })
+
+const logger = new Logger('API /user')
+
+/**
+ *
+ * @param {Request} req
+ * @param {string} message
+ */
+function logError(req, message) {
+  logger.error(req.originalUrl, `IP='${req.ip},IPS='${req.ips}'`, message)
+}
 
 function getAuthToken(req) {
   const token = req.body.token || req.headers['x-access-token']
@@ -38,11 +53,7 @@ function getAuthToken(req) {
 function requireAuthToken(req, res, next) {
   const userData = getAuthToken(req)
   if (!userData) {
-    consola.error(
-      'requireAuthToken: Detect Suspicious Access...',
-      `IP=${req.ip}`,
-      `IPS=${req.ips}`
-    )
+    logError(req, 'requireAuthToken: Detect Suspicious Access...')
     return res.status(403).json({
       message: '認証に失敗しました。'
     })
@@ -61,11 +72,7 @@ function requireAuthToken(req, res, next) {
 function refusalAuthToken(req, res, next) {
   const userData = getAuthToken(req)
   if (userData) {
-    consola.error(
-      'refusalAuthToken: Detect Suspicious Access...',
-      `IP=${req.ip}`,
-      `IPS=${req.ips}`
-    )
+    logError(req, 'refusalAuthToken: Detect Suspicious Access...')
     return res.redirect('/user')
   }
 
@@ -79,6 +86,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       req.body.password
     )
     if (!loginParam.doValid) {
+      logError(req, 'invalid paramaters')
       return res.status(202).json({
         isSuccessed: false,
         message: 'パラメータが正しくありません'
@@ -87,6 +95,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
 
     const token = await User.login(loginParam)
     if (!token) {
+      logError(req, 'failed to authentication')
       return res.status(202).json({
         isSuccessed: false,
         message: '認証に失敗しました'
@@ -98,7 +107,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       token: token
     })
   } catch (error) {
-    consola.error(error)
+    logError(req, error)
     return res.status(500).send({
       isSuccessed: false,
       message: 'サーバー側の不具合により認証に失敗しました'
@@ -110,6 +119,7 @@ router.post('/logout', requireAuthToken, async function(req, res) {
   try {
     const isSuccessed = await User.logout(req.userData)
     if (!isSuccessed) {
+      logError(req, 'failed to logout')
       return res.status(202).json({
         isSuccessed: false,
         message: 'ログアウトに失敗しました'
@@ -120,7 +130,7 @@ router.post('/logout', requireAuthToken, async function(req, res) {
       isSuccessed: true
     })
   } catch (error) {
-    consola.error(error)
+    logError(req, error)
     return res.status(500).send({
       isSuccessed: false,
       message: 'サーバー側の不具合によりログアウトに失敗しました'
@@ -132,6 +142,7 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
   try {
     const isSuccessed = await User.delete(req.userData)
     if (!isSuccessed) {
+      logError(req, 'failed to delete user')
       return res.status(202).json({
         isSuccessed: false,
         message: 'ユーザーの削除に失敗しました'
@@ -142,7 +153,7 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
       isSuccessed: true
     })
   } catch (error) {
-    consola.error(error)
+    logError(req, error)
     return res.status(500).send({
       isSuccessed: false,
       message: 'サーバー側の不具合によりユーザーの削除に失敗しました'
@@ -170,6 +181,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
       }
     )
     if (!signupParam.doValid()) {
+      logError(req, 'invalid parameters')
       return res.status(202).json({
         isSuccessed: false,
         messages: 'パラメータが正しくありません'
@@ -177,6 +189,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     }
 
     if (await User.isExist(signupParam.name, signupParam.email)) {
+      logError(req, 'invalid parameters because has duplicate parameter')
       return res.status(202).json({
         isSuccessed: false,
         messages: '既存のユーザーと同じ情報を持っています'
@@ -185,6 +198,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
 
     const tokenOrError = await UserTmp.add(signupParam)
     if (typeof tokenOrError !== 'string') {
+      logError(req, 'failed to add user')
       return res.status(202).json({
         isSuccessed: false,
         messages: tokenOrError
@@ -205,7 +219,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
 
     return res.json({ isSuccessed: true })
   } catch (error) {
-    consola.error(error)
+    logError(req, error)
     return res.status(500).send('Bad')
   }
 })
@@ -225,7 +239,7 @@ router.post('/signup/:token', refusalAuthToken, async function(req, res) {
     res.set('Content-Type', 'text/html')
     return res.send('<h1>Success authentication user!</h1>')
   } catch (error) {
-    consola.error(error)
+    logError(req, error)
     res.set('Content-Type', 'text/html')
     return res.status(202).send('<h1>Failed authentication user...</h1>')
   }
