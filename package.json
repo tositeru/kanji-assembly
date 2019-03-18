@@ -33,6 +33,7 @@
     "express-session": "^1.15.6",
     "js-cookie": "^2.2.0",
     "jsonwebtoken": "^8.5.0",
+    "log4js": "^4.0.2",
     "moment": "^2.24.0",
     "nodemailer": "^5.1.1",
     "nuxt": "^2.4.0",
