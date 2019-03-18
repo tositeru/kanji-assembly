@@ -14,8 +14,8 @@ class Dispose {
     this._predicate = predicate
   }
 
-  dispose() {
-    this._predicate(this._target)
+  async dispose() {
+    await this._predicate(this._target)
   }
 }
 
@@ -44,8 +44,18 @@ class Test {
    */
   async run() {
     await this._testBody(this)
+  }
+
+  /**
+   *
+   */
+  async dispose() {
+    if (this._disposeObjs.length <= 0) {
+      return
+    }
+    consola.log(`postprocess ${this._name}`)
     for (const obj of this._disposeObjs) {
-      await obj.dispose(obj)
+      await obj.dispose()
     }
   }
 
@@ -67,17 +77,31 @@ class Test {
 async function run(tests, initFunc) {
   await initFunc()
 
+  const failedTests = []
   // テスト実行
-  try {
-    for (const test of tests) {
-      consola.log(`Start ${test.name}`)
+  for (const test of tests) {
+    try {
+      consola.info(`--- Start ${test.name} ---`)
       await test.run()
-      consola.success(`Success ${test.name}!!`)
+      consola.success(`Pass ${test.name}!!`)
+    } catch (error) {
+      failedTests.push(test)
+      consola.error(error)
+      consola.error(`Failed to '${test.name}'...`)
     }
-    consola.log('!!!Complete test!!!')
-  } catch (error) {
-    consola.error(error)
-    consola.error(`Failed to tests...`)
+    await test.dispose()
+  }
+
+  const result = `success=${tests.length - failedTests.length},fail=${
+    failedTests.length
+  }`
+  if (failedTests.length > 0) {
+    consola.error('Failed tests...', result)
+    for (const t of failedTests) {
+      consola.error(`-- ${t.name}`)
+    }
+  } else {
+    consola.success('!!!Complete test!!!', result)
   }
 }
 
