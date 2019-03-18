@@ -1,14 +1,30 @@
 'use strict'
 const crypto = require('crypto')
 const moment = require('moment')
-const consola = require('consola')
 const { TABLE_DEFINETION } = require('../tables/user-tmps.js')
 // const ServerDataTypes = require('../../server/user/defineDatatypes')
+const Logger = require('../../src/log')
 const commonCrypt = require('./commonCrypt')
+
+const logger = new Logger('DB UserTmp', 'debug')
 
 module.exports = (sequelize, DataTypes) => {
   const UserTmp = sequelize.define('UserTmp', TABLE_DEFINETION, {})
   UserTmp.associate = async function(models) {}
+
+  /**
+   * 同じパラメータがないか数えす
+   * @param {string} name
+   * @param {string} email
+   */
+  UserTmp.isExist = async function(name, email) {
+    const count = await UserTmp.count({
+      where: {
+        [sequelize.Op.or]: [{ name: name }, { email: email }]
+      }
+    })
+    return count > 0
+  }
 
   /**
    * 仮ユーザー登録を行う
@@ -33,6 +49,11 @@ module.exports = (sequelize, DataTypes) => {
       ) {
         throw new RangeError('使用できないパスワードの長さを登録に使用しました')
       }
+
+      logger.info(
+        'Add',
+        `name=${signupParam.name},email=${signupParam.email},token=${token}`
+      )
       return token
     } catch (error) {
       const checkColumns = [
@@ -59,12 +80,7 @@ module.exports = (sequelize, DataTypes) => {
       ) {
         errorMessages.password = '使用できないパスワードを登録に使用しました'
       }
-      consola.error(
-        `ユーザー登録失敗. name=${signupParam.name},email=${
-          signupParam.email
-        },password=${signupParam.password};`,
-        error
-      )
+      logger.error('Add', `name=${signupParam.name},email=${signupParam.email}`)
       return errorMessages
     }
   }
@@ -89,6 +105,10 @@ module.exports = (sequelize, DataTypes) => {
       password2: usertmp.password2
     }
     usertmp.destroy()
+    logger.error(
+      'isValidToken',
+      `token=${token},name=${result.name},email=${result.email}`
+    )
     return result
   }
 

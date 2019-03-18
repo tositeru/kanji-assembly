@@ -33,6 +33,14 @@ const logger = new Logger('API /user')
 function logError(req, message) {
   logger.error(req.originalUrl, `IP='${req.ip},IPS='${req.ips}'`, message)
 }
+/**
+ *
+ * @param {Request} req
+ * @param {string} message
+ */
+function logInfo(req, message) {
+  logger.info(req.originalUrl, `IP='${req.ip},IPS='${req.ips}'`, message)
+}
 
 function getAuthToken(req) {
   const token = req.body.token || req.headers['x-access-token']
@@ -235,7 +243,7 @@ router.post('/signup/:token', refusalAuthToken, async function(req, res) {
     if (!user) {
       throw new Error('Failed to create User...')
     }
-
+    logInfo(req, `create user name=${user.name},email=${user.email}`)
     res.set('Content-Type', 'text/html')
     return res.send('<h1>Success authentication user!</h1>')
   } catch (error) {
@@ -249,12 +257,22 @@ router.post('/signup/:token', refusalAuthToken, async function(req, res) {
  * @params name  ユーザー名
  * @params email メールアドレス
  */
-router.get('/check', function(req, res) {
-  // TODO Query for User Table
+router.get('/check', async function(req, res) {
+  let nameCount = 0
+  if (req.query.name) {
+    nameCount = await User.isExist(req.query.name, null)
+    nameCount += await UserTmp.isExist(req.query.name, null)
+  }
+  let emailCount = 0
+  if (req.query.email) {
+    emailCount = await User.isExist(null, req.query.email)
+    emailCount += await UserTmp.isExist(null, req.query.email)
+  }
+
   return res.json({
     status: {
-      name: req.query.name !== 'Only',
-      email: req.query.email !== 'same@mail.com'
+      name: nameCount > 0,
+      email: emailCount > 0
     }
   })
 })
