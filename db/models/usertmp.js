@@ -11,6 +11,20 @@ module.exports = (sequelize, DataTypes) => {
   UserTmp.associate = async function(models) {}
 
   /**
+   * 同じパラメータがないか数えす
+   * @param {string} name
+   * @param {string} email
+   */
+  UserTmp.isExist = async function(name, email) {
+    const count = await UserTmp.count({
+      where: {
+        [sequelize.Op.or]: [{ name: name }, { email: email }]
+      }
+    })
+    return count > 0
+  }
+
+  /**
    * 仮ユーザー登録を行う
    * @param {ServerDataTypes.SignupParameters} signupParam
    */

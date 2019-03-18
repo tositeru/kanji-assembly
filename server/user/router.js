@@ -249,12 +249,22 @@ router.post('/signup/:token', refusalAuthToken, async function(req, res) {
  * @params name  ユーザー名
  * @params email メールアドレス
  */
-router.get('/check', function(req, res) {
-  // TODO Query for User Table
+router.get('/check', async function(req, res) {
+  let nameCount = 0
+  if (req.query.name) {
+    nameCount = await User.isExist(req.query.name, null)
+    nameCount += await UserTmp.isExist(req.query.name, null)
+  }
+  let emailCount = 0
+  if (req.query.email) {
+    emailCount = await User.isExist(null, req.query.email)
+    emailCount += await UserTmp.isExist(null, req.query.email)
+  }
+
   return res.json({
     status: {
-      name: req.query.name !== 'Only',
-      email: req.query.email !== 'same@mail.com'
+      name: nameCount > 0,
+      email: emailCount > 0
     }
   })
 })
