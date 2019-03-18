@@ -9,10 +9,15 @@ const consola = require('consola')
 const shell = require('shelljs')
 const sleep = require('sleep')
 const UserDatatype = require('../server/user/defineDatatypes')
-const { UserTmp } = require('../db/database')
+const { User, UserTmp } = require('../db/database')
 const Utils = require('./utils')
 
 axios.defaults.baseURL = 'http://localhost:3003'
+
+// テスト用にどんなレスポンスでも例外を投げないようにしている
+axios.defaults.validateStatus = _ => {
+  return true
+}
 
 /**
  * テスト環境の初期化
@@ -70,34 +75,29 @@ async function createUserReservingToSignup(name, email, password) {
  * @return {string|null} auth-token
  */
 async function createUser(name, email, password) {
-  try {
-    const param = new UserDatatype.SignupParameters(name, email, password, {
-      notSendMail: true // データベースを直接見るのでメールは送らない
-    })
-    await axios.post('user/signup', param.toObj())
+  const param = new UserDatatype.SignupParameters(name, email, password, {
+    notSendMail: true // データベースを直接見るのでメールは送らない
+  })
+  await axios.post('user/signup', param.toObj())
 
-    // query token by direct database
-    const tmpUser = await UserTmp.findOne({
-      where: {
-        name: name,
-        email: email
-      }
-    })
-    const token = tmpUser.token
+  // query token by direct database
+  const tmpUser = await UserTmp.findOne({
+    where: {
+      name: name,
+      email: email
+    }
+  })
+  const token = tmpUser.token
 
-    await axios.post(`user/signup/${token}`, {
-      headers: {
-        'Content-Type': 'text/html'
-      }
-    })
+  await axios.post(`user/signup/${token}`, {
+    headers: {
+      'Content-Type': 'text/html'
+    }
+  })
 
-    const loginParam = new UserDatatype.LoginParameters(email, password)
-    const loginResposnse = await axios.post('user/login', loginParam.toObj())
-    return loginResposnse.data.token
-  } catch (error) {
-    assert.ok(false, `Failed to create user... ${error}`)
-    return null
-  }
+  const loginParam = new UserDatatype.LoginParameters(email, password)
+  const loginResposnse = await axios.post('user/login', loginParam.toObj())
+  return loginResposnse.data.token
 }
 
 /**
@@ -307,7 +307,7 @@ const tests = [
     }
   }),
   new Utils.Test('test invalid post user/signup', async test => {
-    const tomData = UserDatatype.SignupParameters(
+    const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
       'tomtomtomtom',
@@ -320,7 +320,7 @@ const tests = [
     )
     test.pushDisposeObject(tomToken, deleteUser)
 
-    const reservingUserData = UserDatatype.SignupParameters(
+    const reservingUserData = new UserDatatype.SignupParameters(
       'Sara',
       'sara@mail.com',
       'sarasrarsara'
@@ -341,7 +341,7 @@ const tests = [
     }
     // POST /user/signup with already used name in parameters
     {
-      const param = UserDatatype.SignupParameters(
+      const param = new UserDatatype.SignupParameters(
         tomData.name,
         'hoge@mail.com.com',
         'tomotmotmo'
@@ -352,7 +352,7 @@ const tests = [
         'failed to reject the parameter including the already used name...'
       )
 
-      const param2 = UserDatatype.SignupParameters(
+      const param2 = new UserDatatype.SignupParameters(
         reservingUserData.name,
         'hoge@mail.com.com',
         'tomotmotmo'
@@ -365,7 +365,7 @@ const tests = [
     }
     // POST /user/signup with already used email in parameters
     {
-      const param = UserDatatype.SignupParameters(
+      const param = new UserDatatype.SignupParameters(
         'Sum',
         tomData.email,
         'tomotmotmo'
@@ -376,7 +376,7 @@ const tests = [
         'failed to reject the parameter including the already used email...'
       )
 
-      const param2 = UserDatatype.SignupParameters(
+      const param2 = new UserDatatype.SignupParameters(
         'Sum',
         reservingUserData.email,
         'tomotmotmo'
@@ -387,17 +387,129 @@ const tests = [
         'failed to reject the parameter including the already used email in Usertmp...'
       )
     }
-  })
-
+  }),
   // POST /user/login with void parameters
   // POST /user/login with invalid parameters
+  new Utils.Test('test invalid post user/login', async test => {
+    // POST /user/login with void parameters
+    {
+      const res = await axios.post('user/login', {})
+      assert.ok(res.status === 202, 'failed to reject the void parameter...')
+    }
+    // POST /user/login with unexsiting parameters
+    {
+      const param = new UserDatatype.LoginParameters(
+        'hgohgpr@jgvoi.com',
+        'aaaaaaaaaaaaaaa'
+      )
+      const res = await axios.post('user/login', param)
+      assert.ok(
+        res.status === 202,
+        'failed to reject the unexsiting parameter...'
+      )
+    }
 
-  // save to authToken
+    // POST /user/login with the already login user
+    const tomData = new UserDatatype.SignupParameters(
+      'Tom',
+      'tom@mail.com',
+      'tomtomtomtom'
+    )
+    const authToken = await createUser(
+      tomData.name,
+      tomData.email,
+      tomData.password
+    )
+    test.pushDisposeObject(authToken, deleteUser)
+    {
+      const param = new UserDatatype.LoginParameters(
+        tomData.email,
+        tomData.password
+      )
+      const res = await axios.post('user/login', param.toObj())
+      assert.ok(res.status === 200, 'failed to login for already login user...')
+    }
+    await axios.post('user/logout', {
+      token: authToken
+    })
 
-  // POST /user/logout without auth token
+    // POST /user/login with the invalid password
+    {
+      const param = new UserDatatype.LoginParameters(
+        tomData.email,
+        'invalid password'
+      )
+      const res = await axios.post('user/login', param)
+      assert.ok(res.status === 202, 'failed to reject the missing password...')
+    }
+  }),
+  new Utils.Test('test invalid POST user/logout', async test => {
+    // POST /user/logout without auth token
+    {
+      const res = await axios.post('user/logout', {})
+      assert.ok(
+        res.status === 403 && !res.data.isSuccessed,
+        'failed to logout without auth token...'
+      )
+    }
+    // POST /user/logout with a invalid auth token
+    {
+      const invalidAuthToken = User.createAuthToken(
+        'hog0934ug4jhg9[43ujgv[03u4wg'
+      )
+      const res = await axios.post('user/logout', { token: invalidAuthToken })
+      assert.ok(
+        res.status === 202 && !res.data.isSuccessed,
+        'failed to logout with a invalid auth token...'
+      )
+    }
+    // POST /user/logout not login user
+    const tomData = new UserDatatype.SignupParameters(
+      'Tom',
+      'tom@mail.com',
+      'tomtomtomtom'
+    )
+    const authToken = await createUser(
+      tomData.name,
+      tomData.email,
+      tomData.password
+    )
+    test.pushDisposeObject(authToken, deleteUser)
+    await axios.post('user/logout', { token: authToken })
+    {
+      const res = await axios.post('user/logout', { token: authToken })
+      assert.ok(
+        res.status === 202 && !res.data.isSuccessed,
+        'failed to reject the logout user ...'
+      )
+    }
+  }),
+  new Utils.Test('test invalid POST user/delete', async test => {
+    // POST /user/delete without auth token
+    const res = await axios.delete('user/delete')
+    assert.ok(
+      res.status === 403 && !res.data.isSuccessed,
+      'failed to delete without auth token...'
+    )
 
-  // POST /user/delete without auth token
-  // POST /user/delete without invalid auth token
+    // POST /user/delete without invalid auth token
+    // POST /user/delete without auth token
+    {
+      const invalidAuthToken = User.createAuthToken('eu9302ur390ru0439ur3094')
+      const res = await axios.delete('user/delete', {
+        data: {
+          token: invalidAuthToken
+        },
+        headers: {
+          'Content-Length': invalidAuthToken.length
+        }
+      })
+      assert.ok(
+        res.status === 202 && !res.data.isSuccessed,
+        'failed to delete without auth token...'
+      )
+    }
+  })
 ]
 
 Utils.run(tests, init)
