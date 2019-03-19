@@ -9,6 +9,10 @@ export const state = () => ({
 export const mutations = {
   setAuthToken(state, authToken) {
     state.auth = authToken
+  },
+  setUserParameters(state, { name, email }) {
+    state.name = name
+    state.email = email
   }
 }
 
@@ -77,5 +81,18 @@ export const actions = {
         message: 'ログアウトに失敗しました'
       }
     }
+  },
+  async get({ state, commit }) {
+    if (!state.auth) {
+      return
+    }
+    try {
+      const res = await axios.get('/user/get', {
+        headers: {
+          'x-access-token': state.auth
+        }
+      })
+      return res.data
+    } catch (error) {}
   }
 }
