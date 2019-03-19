@@ -1,6 +1,6 @@
 import axios from 'axios'
 import consola from 'consola'
-import cookieparser from 'cookieparser'
+import Cookie from 'js-cookie'
 
 export const state = () => ({
   auth: null
@@ -13,20 +13,6 @@ export const mutations = {
 }
 
 export const actions = {
-  nuxtServerInit({ commit }, { req }) {
-    let auth = null
-    if (req.headers.cookie) {
-      const parsed = cookieparser.parse(req.headers.cookie)
-      try {
-        auth = JSON.parse(parsed.auth)
-      } catch (err) {
-        // No valid cookie found
-        consola.error('Found invalid user...', err)
-      }
-    }
-    commit('setAuth', auth)
-  },
-
   async signup({ state, commit }, { name, email, password }) {
     if (state.auth) {
       consola.error('User Signup', 'Invalid Operation')
@@ -54,7 +40,9 @@ export const actions = {
       })
       if (res.data.isSuccessed) {
         commit('setAuthToken', res.data.token)
+        Cookie.set('auth', res.data.token, { expires: 10 })
       }
+
       return res.data
     } catch (error) {
       consola.error('Failed user login', error)
@@ -78,6 +66,7 @@ export const actions = {
       })
 
       commit('setAuthToken', null)
+      Cookie.set('auth', null)
       return {
         isSuccessed: true
       }

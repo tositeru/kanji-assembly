@@ -55,6 +55,7 @@ module.exports = {
   },
 
   router: {
+    middleware: ['cookie'], // クッキーデータをVuexに移すためのミドルウェア
     extendRoutes(routes, resolve) {
       routes.push({
         path: '*',
