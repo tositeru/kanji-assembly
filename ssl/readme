@@ -6,8 +6,6 @@ auth-token/authtoken.pem
 auth-token/authtoken.pub
 
 openssl genrsa -out ssl/develop.key 4096
-openssl rsa -in ssl/develop.key -out ssl/develop.crt -pubout 
-
-openssl genrsa -out ssl/auth-token/private.key -aes256 4096
-openssl rsa -in ssl/develop.key -out ssl/public.pub -pubout 
+openssl req -new -key server.key > server.csr
+openssl x509 -in ssl/develop.csr -days 565000 -req -signkey ssl/develop.key > ssl/develop.crt
 
