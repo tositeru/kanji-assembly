@@ -509,6 +509,53 @@ const tests = [
         'failed to delete without auth token...'
       )
     }
+  }),
+  new Utils.Test('Test /user/get', async () => {
+    const tomData = new UserDatatype.SignupParameters(
+      'Tom',
+      'tom@mail.com',
+      'tomtomtomtom',
+      { doSendMail: false }
+    )
+    const tomToken = await createUser(
+      tomData.name,
+      tomData.email,
+      tomData.password
+    )
+    test.pushDisposeObject(tomToken, deleteUser)
+
+    // success
+    {
+      const res = await axios.get('user/get', {
+        headers: {
+          'x-access-token': tomToken
+        }
+      })
+      assert.ok(
+        res.data.name === tomData.name && res.data.email === tomData.email,
+        'failed to get user parameters...'
+      )
+    }
+    // invalid auth token
+    {
+      const res = await axios.get('user/get', {
+        headers: {
+          'x-access-token': tomToken
+        }
+      })
+      assert.ok(
+        res.status === 403,
+        'Failed to reject with invalid auth token...'
+      )
+    }
+    // none auth token
+    {
+      const res = await axios.get('user/get')
+      assert.ok(
+        res.status === 403,
+        'Failed to reject with a empty auth token...'
+      )
+    }
   })
 ]
 
