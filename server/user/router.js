@@ -2,6 +2,7 @@ const path = require('path')
 const express = require('express')
 const pug = require('pug')
 const log4js = require('log4js')
+const cookieparser = require('cookieparser')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
 const { User, UserTmp } = require('../../db/database')
@@ -44,11 +45,16 @@ function logInfo(req, message) {
 
 function getAuthToken(req) {
   const token = req.body.token || req.headers['x-access-token']
-  if (!token) {
-    return null
+  if (token) {
+    const userData = User.validateAuthToken(token)
+    return userData
   }
-  const userData = User.validateAuthToken(token)
-  return userData
+
+  if (req.headers.cookie) {
+    const parsed = cookieparser.parse(req.headers.cookie)
+    return parsed.auth
+  }
+  return null
 }
 
 /**
