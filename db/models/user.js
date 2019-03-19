@@ -153,16 +153,16 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  User.logout = async userData => {
+  User.logout = async userAuth => {
     try {
       const user = await User.findOne({
         where: {
-          id: userData.id,
+          id: userAuth.id,
           status: User.STATUS_LOGIN
         }
       })
       if (!user) {
-        logger.error('Logout', `user id=${userData.id}`, 'not find user')
+        logger.error('Logout', `user id=${userAuth.id}`, 'not find user')
         return false
       }
       user.setDataValue('status', User.STATUS_LOGOUT)
@@ -174,20 +174,20 @@ module.exports = (sequelize, DataTypes) => {
       )
       return true
     } catch (error) {
-      logger.error('Logout', `id=${userData.id}`, error)
+      logger.error('Logout', `id=${userAuth.id}`, error)
       return false
     }
   }
 
-  User.delete = async userData => {
+  User.delete = async userAuth => {
     try {
       const user = await User.findOne({
         where: {
-          id: userData.id
+          id: userAuth.id
         }
       })
       if (!user) {
-        logger.error('Delete', `user id=${userData.id} `, 'not find user')
+        logger.error('Delete', `user id=${userAuth.id} `, 'not find user')
         return false
       }
       user.setDataValue('status', User.STATUS_LOCKED)
@@ -200,8 +200,21 @@ module.exports = (sequelize, DataTypes) => {
 
       return true
     } catch (error) {
-      logger.error('Delete', `user id=${userData.id}`, error)
+      logger.error('Delete', `user id=${userAuth.id}`, error)
       return false
+    }
+  }
+
+  User.getById = async id => {
+    try {
+      const user = await User.findOne({
+        where: {
+          id: id
+        }
+      })
+      return user
+    } catch (error) {
+      logger.error('GetByID', `id=${id}`, error)
     }
   }
 

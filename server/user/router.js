@@ -32,7 +32,11 @@ const logger = new Logger('API /user')
  * @param {string} message
  */
 function logError(req, message) {
-  logger.error(req.originalUrl, `IP='${req.ip},IPS='${req.ips}'`, message)
+  logger.error(
+    req.originalUrl,
+    `IP='${req.ip},IPS='${req.ips} auth=${JSON.stringify(req.userAuth)}'`,
+    message
+  )
 }
 /**
  *
@@ -40,14 +44,18 @@ function logError(req, message) {
  * @param {string} message
  */
 function logInfo(req, message) {
-  logger.info(req.originalUrl, `IP='${req.ip},IPS='${req.ips}'`, message)
+  logger.info(
+    req.originalUrl,
+    `IP='${req.ip},IPS='${req.ips}' auth=${JSON.stringify(req.userAuth)}`,
+    message
+  )
 }
 
 function getAuthToken(req) {
   const token = req.body.token || req.headers['x-access-token']
   if (token) {
-    const userData = User.validateAuthToken(token)
-    return userData
+    const userAuth = User.validateAuthToken(token)
+    return userAuth
   }
 
   if (req.headers.cookie) {
@@ -65,15 +73,15 @@ function getAuthToken(req) {
  * @param {*} next
  */
 function requireAuthToken(req, res, next) {
-  const userData = getAuthToken(req)
-  if (!userData) {
+  const userAuth = getAuthToken(req)
+  if (!userAuth) {
     logError(req, 'requireAuthToken: Detect Suspicious Access...')
     return res.status(403).json({
       message: '認証に失敗しました。'
     })
   }
   // リクエストにユーザーデータを付けて次のコールバックで使えるようにする
-  req.userData = userData
+  req.userAuth = userAuth
   next()
 }
 
@@ -84,8 +92,8 @@ function requireAuthToken(req, res, next) {
  * @param {*} next
  */
 function refusalAuthToken(req, res, next) {
-  const userData = getAuthToken(req)
-  if (userData) {
+  const userAuth = getAuthToken(req)
+  if (userAuth) {
     logError(req, 'refusalAuthToken: Detect Suspicious Access...')
     return res.redirect('/user')
   }
@@ -131,7 +139,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
 
 router.post('/logout', requireAuthToken, async function(req, res) {
   try {
-    const isSuccessed = await User.logout(req.userData)
+    const isSuccessed = await User.logout(req.userAuth)
     if (!isSuccessed) {
       logError(req, 'failed to logout')
       return res.status(202).json({
@@ -154,7 +162,7 @@ router.post('/logout', requireAuthToken, async function(req, res) {
 
 router.delete('/delete', requireAuthToken, async function(req, res) {
   try {
-    const isSuccessed = await User.delete(req.userData)
+    const isSuccessed = await User.delete(req.userAuth)
     if (!isSuccessed) {
       logError(req, 'failed to delete user')
       return res.status(202).json({
@@ -171,6 +179,24 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
     return res.status(500).send({
       isSuccessed: false,
       message: 'サーバー側の不具合によりユーザーの削除に失敗しました'
+    })
+  }
+})
+
+router.get('/get', requireAuthToken, async function(req, res) {
+  try {
+    const user = await User.getById(req.userAuth.id)
+    logInfo(req, `OK`)
+    return res.json({
+      isSuccessed: true,
+      name: user.name,
+      email: user.email
+    })
+  } catch (error) {
+    logError(req, error)
+    return res.status(500).send({
+      isSuccessed: false,
+      message: 'サーバー側の不具合により情報の取得に失敗しました'
     })
   }
 })

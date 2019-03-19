@@ -510,7 +510,7 @@ const tests = [
       )
     }
   }),
-  new Utils.Test('Test /user/get', async () => {
+  new Utils.Test('Test /user/get', async test => {
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
@@ -532,7 +532,9 @@ const tests = [
         }
       })
       assert.ok(
-        res.data.name === tomData.name && res.data.email === tomData.email,
+        res.status === 200 &&
+          res.data.name === tomData.name &&
+          res.data.email === tomData.email,
         'failed to get user parameters...'
       )
     }
@@ -540,7 +542,7 @@ const tests = [
     {
       const res = await axios.get('user/get', {
         headers: {
-          'x-access-token': tomToken
+          'x-access-token': 'jd903jf9h43wt9g0t3y4vtnhg 09[n3uvt0934un tv90'
         }
       })
       assert.ok(
