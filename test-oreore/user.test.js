@@ -27,7 +27,7 @@ async function init() {
   shell.exec('yarn sequelize db:migrate:undo:all --env=test')
   shell.exec('yarn sequelize db:migrate --env=test')
   // データベースにテスト用データを挿入する
-  shell.exec('yarn sequelize db:seed --env=test --seed test-users')
+  //shell.exec('yarn sequelize db:seed --env=test --seed test-users')
 
   // サーバーが起動しているか確認
   consola.info('check server running')
@@ -118,6 +118,23 @@ async function deleteUser(userToken) {
     return true
   } catch (error) {
     assert.ok(false, `Failed to delete user... ${error}`)
+    return false
+  }
+}
+
+/**
+ * 全ユーザーを削除する
+ */
+async function deleteAllUser() {
+  try {
+    await User.destroy({
+      where: {
+        deletedAt: null
+      },
+      force: true
+    })
+  } catch (error) {
+    consola.error('全ユーザーの削除に失敗')
     return false
   }
 }
@@ -510,7 +527,7 @@ const tests = [
       )
     }
   }),
-  new Utils.Test('Test /user/get', async test => {
+  new Utils.Test('Test GET /user/get', async test => {
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
@@ -557,6 +574,115 @@ const tests = [
         res.status === 403,
         'Failed to reject with a empty auth token...'
       )
+    }
+  }),
+  new Utils.Test('Test POST /user/update', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+    // success
+    {
+      const tomData = new UserDatatype.SignupParameters(
+        'Tom',
+        'tom@mail.com',
+        'tomtomtomtom',
+        { doSendMail: false }
+      )
+      const tomToken = await createUser(
+        tomData.name,
+        tomData.email,
+        tomData.password
+      )
+
+      const updateParam = new UserDatatype.UpdateParameter(
+        'Tom2',
+        'tom2@mail.com',
+        'tom2tom2tom2tom2',
+        tomData.password,
+        false
+        )
+      const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
+        headers: {
+          'x-access-token': tomToken
+        }
+      }))
+      const newAuthToken = res.data.authToken
+      assert.ok(res.status === 200, 'Failed to update user parameters...')
+      assert.ok(!newAuthToken && newAuthToken !== tomToken, 'Failed to update user parameters by the invalid auth token...')
+
+      // name and email check
+      const nameAndEmailRes = await axios.get('uesr/get', {
+        headers: {
+          'x-access-token': newAuthToken
+        }
+      })
+      assert.ok(nameAndEmailRes.status === '200', 'Failed to update user parameters by the invalid auth token...')
+      assert.ok(nameAndEmailRes.data.name === updateParam.name, 'Failed to update the name of user...')
+      assert.ok(nameAndEmailRes.data.email === updateParam.email, 'Failed to update the email of user...')
+
+      //password check
+      const passwordRes = await axios.post('user/login', {
+        email: updateParam.email,
+        password: updateParam.password
+      })
+      assert.ok(passwordRes.status === 200, 'Failed to update user password...')
+    }
+    // invalid parameter
+    {
+      const saraData = new UserDatatype.SignupParameters(
+        'Sara',
+        'Sara@mail.com',
+        'tomtomtomtom',
+        { doSendMail: false }
+      )
+      const saraToken = await createUser(
+        saraData.name,
+        saraData.email,
+        saraData.password
+      )
+      {// invalid oldPassword
+        let updateParam = new UserDatatype.UpdateParameter(
+          'Sara2',
+          'tom2@mail.com',
+          'tom2tom2tom2tom2',
+          'hifh94ur94ur490tjepgj',
+          false
+          )
+        const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
+          headers: {
+            'x-access-token': saraToken
+          }
+        }))
+        assert.ok(res.status === 202, 'Failed to update user info because input ot the invalid oldPassword...')
+      }
+      {// invalid input parameters
+        let updateParam = new UserDatatype.UpdateParameter(
+          '', // invalid name
+          'tom2', // invalid email
+          '', // invalid password
+          saraData.password,
+          false
+          )
+        const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
+          headers: {
+            'x-access-token': saraToken
+          }
+        }))
+        assert.ok(res.status === 202 && doExistPropertys(res.data.messages, [['name', 'string'], ['email', 'string'], ['password', 'string']]), 'Failed to update user info because input ot the parameters... data=${res.data.toString()}')
+      }
+      {// invalid auth token
+        let updateParam = new UserDatatype.UpdateParameter(
+          'Sara Smith', // invalid name
+          'smith.sara@mail.com', // invalid email
+          '',
+          saraData.password,
+          false
+          )
+        const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
+          headers: {
+            'x-access-token': 'fwh3048ry bv43byvt9348b'
+          }
+        }))
+        assert.ok(res.status === 202 && doExistPropertys(res.data.messages, [['name', 'string'], ['email', 'string'], ['password', 'string']]), 'Failed to update user info because input ot the parameters... data=${res.data.toString()}')
+      }
     }
   })
 ]
