@@ -55,8 +55,10 @@ export default {
   },
   async mounted() {
     const userParameter = await this.$store.dispatch('user/get')
-    this.user.name = userParameter.name
-    this.user.email = userParameter.email
+    if (userParameter) {
+      this.user.name = userParameter.name
+      this.user.email = userParameter.email
+    }
   },
   methods: {
     save() {

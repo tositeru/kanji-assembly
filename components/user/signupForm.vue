@@ -104,8 +104,8 @@ export default {
         'name',
         this.signupInfo.name
       ))
-        ? null
-        : '同じ名前のユーザーが存在しています'
+        ? '同じ名前のユーザーが存在しています'
+        : null
       this.doCheckingName = false
     },
     async changeEmail() {
@@ -114,8 +114,8 @@ export default {
         'email',
         this.signupInfo.email
       ))
-        ? null
-        : '同じメールアドレスのユーザーが存在しています'
+        ? '同じメールアドレスのユーザーが存在しています'
+        : null
       this.doCheckingEmail = false
     }
   }
@@ -130,6 +130,7 @@ async function checkUserParam(key, param) {
       },
       params: params
     })
+
     return res.data.status[key]
   } catch (err) {
     alert(err)
