@@ -103,7 +103,7 @@ class LoginParameters {
  * ユーザーパラメータ更新時に使うパラメータ
  * @class
  */
-class UpdateParameter {
+class UpdateParameters {
   /**
    * @param {string} name 
    * @param {string} email 
@@ -146,5 +146,5 @@ class UpdateParameter {
 module.exports = {
   SignupParameters: SignupParameters,
   LoginParameters: LoginParameters,
-  UpdateParameter: UpdateParameter
+  UpdateParameters: UpdateParameters
 }

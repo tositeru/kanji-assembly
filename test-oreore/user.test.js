@@ -210,7 +210,7 @@ const tests = [
       const logoutResposnse = await axios.post('user/logout', {
         token: loginResposnse.data.token
       })
-      assert.ok(logoutResposnse.status === 200, 'Failed to logout...')
+      assert.ok(logoutResposnse.status === 200, `Failed to logout... status=${logoutResposnse.status}`)
     }
 
     // DELETE /user/delete with auth token
@@ -234,10 +234,12 @@ const tests = [
           'Content-Length': loginResposnse.data.token.length
         }
       })
-      assert.ok(deleteResposnse.status === 200, 'Failed to delete user...')
+      assert.ok(deleteResposnse.status === 200, `Failed to delete user... status=${deleteResposnse.status}`)
     }
   }),
   new Utils.Test('test user/check', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+
     const userData = {
       name: 'Tom',
       email: 'tom@mail.com',
@@ -248,7 +250,6 @@ const tests = [
       userData.email,
       userData.password
     )
-    test.pushDisposeObject(tokenTom, deleteUser)
 
     {
       const { data } = await axios.get('user/check', {
@@ -324,6 +325,7 @@ const tests = [
     }
   }),
   new Utils.Test('test invalid post user/signup', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
@@ -335,7 +337,6 @@ const tests = [
       tomData.email,
       tomData.password
     )
-    test.pushDisposeObject(tomToken, deleteUser)
 
     const reservingUserData = new UserDatatype.SignupParameters(
       'Sara',
@@ -408,6 +409,7 @@ const tests = [
   // POST /user/login with void parameters
   // POST /user/login with invalid parameters
   new Utils.Test('test invalid post user/login', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
     // POST /user/login with void parameters
     {
       const res = await axios.post('user/login', {})
@@ -437,7 +439,6 @@ const tests = [
       tomData.email,
       tomData.password
     )
-    test.pushDisposeObject(authToken, deleteUser)
     {
       const param = new UserDatatype.LoginParameters(
         tomData.email,
@@ -461,6 +462,7 @@ const tests = [
     }
   }),
   new Utils.Test('test invalid POST user/logout', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
     // POST /user/logout without auth token
     {
       const res = await axios.post('user/logout', {})
@@ -493,7 +495,6 @@ const tests = [
       tomData.email,
       tomData.password
     )
-    test.pushDisposeObject(authToken, deleteUser)
     await axios.post('user/logout', { token: authToken })
     {
       const res = await axios.post('user/logout', { token: authToken })
@@ -534,6 +535,8 @@ const tests = [
     }
   }),
   new Utils.Test('Test GET /user/get', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
@@ -545,7 +548,6 @@ const tests = [
       tomData.email,
       tomData.password
     )
-    test.pushDisposeObject(tomToken, deleteUser)
 
     // success
     {
@@ -598,7 +600,7 @@ const tests = [
         tomData.password
       )
 
-      const updateParam = new UserDatatype.UpdateParameter(
+      const updateParam = new UserDatatype.UpdateParameters(
         'Tom2',
         'tom2@mail.com',
         'tom2tom2tom2tom2',
@@ -645,7 +647,7 @@ const tests = [
         saraData.password
       )
       {// invalid oldPassword
-        let updateParam = new UserDatatype.UpdateParameter(
+        let updateParam = new UserDatatype.UpdateParameters(
           'Sara2',
           'tom2@mail.com',
           'tom2tom2tom2tom2',
@@ -660,7 +662,7 @@ const tests = [
         assert.ok(res.status === 202, 'Failed to update user info because input ot the invalid oldPassword...')
       }
       {// invalid input parameters
-        let updateParam = new UserDatatype.UpdateParameter(
+        let updateParam = new UserDatatype.UpdateParameters(
           '', // invalid name
           'tom2', // invalid email
           '', // invalid password
@@ -675,7 +677,7 @@ const tests = [
         assert.ok(res.status === 202 && doExistPropertys(res.data.messages, [['name', 'string'], ['email', 'string'], ['password', 'string']]), 'Failed to update user info because input ot the parameters... data=${res.data.toString()}')
       }
       {// invalid auth token
-        let updateParam = new UserDatatype.UpdateParameter(
+        let updateParam = new UserDatatype.UpdateParameters(
           'Sara Smith', // invalid name
           'smith.sara@mail.com', // invalid email
           '',
@@ -687,7 +689,7 @@ const tests = [
             'x-access-token': 'fwh3048ry bv43byvt9348b'
           }
         }))
-        assert.ok(res.status === 202 && doExistPropertys(res.data.messages, [['name', 'string'], ['email', 'string'], ['password', 'string']]), 'Failed to update user info because input ot the parameters... data=${res.data.toString()}')
+        assert.ok(res.status === 403 && doExistPropertys(res.data.messages, [['name', 'string'], ['email', 'string'], ['password', 'string']]), 'Failed to update user info because input ot the parameters... data=${res.data.toString()}')
       }
     }
   })
