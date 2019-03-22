@@ -141,7 +141,11 @@ module.exports = (sequelize, DataTypes) => {
       user.setDataValue('status', User.STATUS_LOGIN)
       await user.save()
 
-      const token = User.createAuthToken(user.id, user.createdAt, user.updatedAt)
+      const token = User.createAuthToken(
+        user.id,
+        user.createdAt,
+        user.updatedAt
+      )
 
       logger.info(
         'Login',
@@ -189,7 +193,7 @@ module.exports = (sequelize, DataTypes) => {
         where: {
           id: userAuth.id,
           createdAt: userAuth.createdAt,
-          updatedAt: userAuth.updatedAt,
+          updatedAt: userAuth.updatedAt
         }
       })
       if (!user) {
@@ -220,9 +224,13 @@ module.exports = (sequelize, DataTypes) => {
           updatedAt: authToken.updatedAt
         }
       })
+      if (!user) {
+        throw new Error('Not found user...')
+      }
       return user
     } catch (error) {
       logger.error('GetByID', `token=${JSON.stringify(authToken)}`, error)
+      return null
     }
   }
 
@@ -254,7 +262,7 @@ module.exports = (sequelize, DataTypes) => {
       }
 
       // パラメータ更新
-      let prevParam = {}
+      const prevParam = {}
       if (updateParam.name) {
         prevParam.name = user.name
         user.name = updateParam.name
@@ -266,16 +274,22 @@ module.exports = (sequelize, DataTypes) => {
       if (updateParam.password) {
         prevParam.hashedPassword = {
           hashed: user.password,
-          salt: user.password2  
+          salt: user.password2
         }
-        const encryptPassword = CommonCrypt.encryptPassword(updateParam.password)
-        user.password = encryptPassword.hashedPassword;
-        user.password2 = encryptPassword.salt;
+        const encryptPassword = CommonCrypt.encryptPassword(
+          updateParam.password
+        )
+        user.password = encryptPassword.hashedPassword
+        user.password2 = encryptPassword.salt
       }
 
       await user.save()
 
-      const newToken = User.createAuthToken(user.id, user.createdAt, user.updatedAt)
+      const newToken = User.createAuthToken(
+        user.id,
+        user.createdAt,
+        user.updatedAt
+      )
       return {
         newToken: newToken,
         prevParam: prevParam

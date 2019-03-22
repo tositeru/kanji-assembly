@@ -105,14 +105,13 @@ async function run(tests, initFunc) {
   }
 }
 
-
 module.exports = {
   Test: Test,
   run: run,
 
   /**
    * 渡したオブジェクトに指定した名前と型のプロパティが存在するか確認する
-   * @param {Object} obj 
+   * @param {Object} obj
    * @param {Array<Array<string>>} propNames 要素は0番目に名前、1番目に型名が入る
    */
   doExistPropertys: (obj, propNames) => {
@@ -120,11 +119,10 @@ module.exports = {
       return false
     }
     for (const prop of propNames) {
-      if (!obj[prop[0]] || typeof obj[prop[0]] !== prop[1]) {
+      if (!obj[prop[0]] || toString.call(obj[prop[0]]) !== prop[1]) {
         return false
       }
     }
     return true
   }
-
 }

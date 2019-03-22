@@ -105,13 +105,13 @@ class LoginParameters {
  */
 class UpdateParameters {
   /**
-   * @param {string} name 
-   * @param {string} email 
-   * @param {string} password 
-   * @param {string} oldPassword 
-   * @param {boolean} doSendMail 
+   * @param {string} name
+   * @param {string} email
+   * @param {string} password
+   * @param {string} oldPassword
+   * @param {boolean} doSendMail
    */
-  constructor(name, email, password, oldPassword, doSendMail=true) {
+  constructor(name, email, password, oldPassword, doSendMail = true) {
     this.name = name
     this.email = email
     this.password = password

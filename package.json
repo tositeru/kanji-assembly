@@ -17,7 +17,7 @@
     "open-database": "sqlite3 db/database.db",
     "db:create-model": "node_modules/.bin/sequelize model:create",
     "db:create-migration": "node_modules/.bin/sequelize migration:create",
-    "db:remake-seed": "node_modules/.bin/sequelize db:seed:undo:all && node_modules/.bin/sequelize db:seed:all"
+    "db:remake-seed": "cross-env NODE_ENV=development node_modules/.bin/sequelize db:seed:undo:all && cross-env NODE_ENV=development node_modules/.bin/sequelize db:seed:all"
   },
   "dependencies": {
     "@nuxtjs/axios": "^5.3.6",
