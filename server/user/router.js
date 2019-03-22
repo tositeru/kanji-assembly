@@ -184,6 +184,46 @@ router.get('/get', requireAuthToken, async function(req, res) {
     return res.status(500).send({
       message: 'サーバー側の不具合により情報の取得に失敗しました'
     })
+  }
+})
+
+router.post('/update', requireAuthToken, async function(req, res) {
+  try {
+    const updateParam = new Datatype.UpdateParameters(
+      req.body.name,
+      req.body.email,
+      req.body.password,
+      req.body.oldPassword,
+      req.body.doSendMail
+    )
+
+    //同名のユーザーやメールアドレスがないか確認する
+    if (await User.isExist(updateParam.name, updateParam.email)) {
+      logError(req, 'invalid parameters because has duplicate parameter')
+      return res.status(202).json({
+        messages: '既存のユーザーと同じ情報を持っています'
+      })
+    }
+
+    const updateResult = await User.updateByParam(req.userAuth, updateParam)
+    if (!updateResult) {
+      logError(req, 'Failed to update user parameters...')
+      return res.status(202).json({})
+    }
+    //updateResult.prevParam
+
+    //更新したことを伝えるメールを送信する
+    if (process.NODE_ENV !== 'test' || updateParam.doSendMail) {
+      // TODO
+    }
+
+    logInfo(req, 'OK')
+    return res.json({
+      token: updateResult.newToken
+    })
+  } catch (error) {
+    logError(req, error)
+    return res.status(500).send({
       message: 'サーバー側の不具合により情報の取得に失敗しました'
     })
   }

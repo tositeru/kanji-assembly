@@ -10,11 +10,18 @@ module.exports = {
     },
     name: {
       allowNull: false,
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      validate: {
+        len: [3, 64]
+      }
     },
     email: {
       allowNull: false,
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      validate: {
+        isEmail: true,
+        max: 255
+      }
     },
     password: {
       allowNull: false,

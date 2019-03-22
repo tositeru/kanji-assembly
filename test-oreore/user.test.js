@@ -608,23 +608,21 @@ const tests = [
         false
         )
       const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
-        headers: {
-          'x-access-token': tomToken
-        }
+        token: tomToken
       }))
-      const newAuthToken = res.data.authToken
+      const newAuthToken = res.data.token
       assert.ok(res.status === 200, 'Failed to update user parameters...')
-      assert.ok(!newAuthToken && newAuthToken !== tomToken, 'Failed to update user parameters by the invalid auth token...')
+      assert.ok(newAuthToken && newAuthToken !== tomToken, 'Failed to update user parameters by the invalid auth token...')
 
       // name and email check
-      const nameAndEmailRes = await axios.get('uesr/get', {
+      const nameAndEmailRes = await axios.get('user/get', {
         headers: {
           'x-access-token': newAuthToken
         }
       })
-      assert.ok(nameAndEmailRes.status === '200', 'Failed to update user parameters by the invalid auth token...')
-      assert.ok(nameAndEmailRes.data.name === updateParam.name, 'Failed to update the name of user...')
-      assert.ok(nameAndEmailRes.data.email === updateParam.email, 'Failed to update the email of user...')
+      assert.ok(nameAndEmailRes.status === 200, `Failed to update user parameters by the invalid auth token... status=${nameAndEmailRes.status}`)
+      assert.ok(nameAndEmailRes.data.name === updateParam.name, `Failed to update the name of user... name=${nameAndEmailRes.data.name}`)
+      assert.ok(nameAndEmailRes.data.email === updateParam.email, `Failed to update the email of user... name=${nameAndEmailRes.data.email}`)
 
       //password check
       const passwordRes = await axios.post('user/login', {
@@ -655,9 +653,7 @@ const tests = [
           false
           )
         const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
-          headers: {
-            'x-access-token': saraToken
-          }
+          token: saraToken
         }))
         assert.ok(res.status === 202, 'Failed to update user info because input ot the invalid oldPassword...')
       }
@@ -670,26 +666,47 @@ const tests = [
           false
           )
         const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
-          headers: {
-            'x-access-token': saraToken
-          }
+          token: saraToken
         }))
-        assert.ok(res.status === 202 && doExistPropertys(res.data.messages, [['name', 'string'], ['email', 'string'], ['password', 'string']]), 'Failed to update user info because input ot the parameters... data=${res.data.toString()}')
+        assert.ok(res.status === 202, `Invalid Response status... status=${res.status}`)
       }
       {// invalid auth token
         let updateParam = new UserDatatype.UpdateParameters(
-          'Sara Smith', // invalid name
-          'smith.sara@mail.com', // invalid email
+          'Sara', // invalid name
+          'sara@mail.com', // invalid email
           '',
           saraData.password,
           false
           )
         const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
-          headers: {
-            'x-access-token': 'fwh3048ry bv43byvt9348b'
-          }
+          token: 'invalid auth token'
         }))
-        assert.ok(res.status === 403 && doExistPropertys(res.data.messages, [['name', 'string'], ['email', 'string'], ['password', 'string']]), 'Failed to update user info because input ot the parameters... data=${res.data.toString()}')
+        assert.ok(res.status === 403, `Failed to update user info because invalid auth token... data=${res.status}`)
+      }
+      {// already same parameters
+        const otherData = new UserDatatype.SignupParameters(
+          'Other',
+          'other@mail.com',
+          'otherother',
+          { doSendMail: false }
+        )
+        const otherToken = await createUser(
+          otherData.name,
+          otherData.email,
+          otherData.password
+        )
+  
+        let updateParam = new UserDatatype.UpdateParameters(
+          otherData.name, // invalid name
+          otherData.email, // invalid email
+          '',
+          saraData.password,
+          false
+          )
+        const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
+          token: saraToken
+        }))
+        assert.ok(res.status === 202, `Failed to update user info because already same parameters... status=${res.status}`)
       }
     }
   })

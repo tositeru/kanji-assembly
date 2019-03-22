@@ -223,7 +223,66 @@ module.exports = (sequelize, DataTypes) => {
       return user
     } catch (error) {
       logger.error('GetByID', `token=${JSON.stringify(authToken)}`, error)
-      logger.error('GetByID', `id=${id}`, error)
+    }
+  }
+
+  /**
+   * @param {string} UUID
+   * @param {UpdateParameters} 更新パラメータ
+   * @return {Object} newToken: 新しいトークン, prevParam: 更新したパラメータの以前の値
+   */
+  User.updateByParam = async (authToken, updateParam) => {
+    try {
+      const user = await User.findOne({
+        where: {
+          id: authToken.id,
+          createdAt: authToken.createdAt,
+          updatedAt: authToken.updatedAt
+        }
+      })
+      if (!user) {
+        throw new Error('Miss to find user...')
+      }
+
+      const encryptPassword = CommonCrypt.encryptPassword(
+        updateParam.oldPassword,
+        user.password2
+      )
+
+      if (user.password !== encryptPassword.hashedPassword) {
+        throw new Error('invalid password')
+      }
+
+      // パラメータ更新
+      let prevParam = {}
+      if (updateParam.name) {
+        prevParam.name = user.name
+        user.name = updateParam.name
+      }
+      if (updateParam.email) {
+        prevParam.email = user.email
+        user.email = updateParam.email
+      }
+      if (updateParam.password) {
+        prevParam.hashedPassword = {
+          hashed: user.password,
+          salt: user.password2  
+        }
+        const encryptPassword = CommonCrypt.encryptPassword(updateParam.password)
+        user.password = encryptPassword.hashedPassword;
+        user.password2 = encryptPassword.salt;
+      }
+
+      await user.save()
+
+      const newToken = User.createAuthToken(user.id, user.createdAt, user.updatedAt)
+      return {
+        newToken: newToken,
+        prevParam: prevParam
+      }
+    } catch (error) {
+      logger.error('UpdateByParam', `token=${JSON.stringify(authToken)}`, error)
+      return null
     }
   }
 
