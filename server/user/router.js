@@ -58,10 +58,15 @@ function getAuthToken(req) {
     return userAuth
   }
 
-  if (req.headers.cookie) {
-    const parsed = cookieparser.parse(req.headers.cookie)
-    return parsed.auth
+  const parsedCookie = cookieparser.parse(req.headers.cookie)
+  if (parsedCookie.auth) {
+    if (parsedCookie.auth === 'undefined' ||
+        parsedCookie.auth === 'null') {
+      return null
+    }
+    return parsedCookie.auth
   }
+
   return null
 }
 
@@ -122,6 +127,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       })
     }
 
+    logInfo(req, `email=${loginParam.email}`)
     return res.json({
       token: token
     })
@@ -174,6 +180,10 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
 router.get('/get', requireAuthToken, async function(req, res) {
   try {
     const user = await User.getByAuthToken(req.userAuth)
+    if (!user) {
+      return res.status(403)
+    }
+
     logInfo(req, `OK`)
     return res.json({
       name: user.name,
@@ -289,7 +299,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
   }
 })
 
-router.post('/signup/:token', refusalAuthToken, async function(req, res) {
+router.get('/signup/:token', refusalAuthToken, async function(req, res) {
   try {
     const userInfo = await UserTmp.isValidToken(req.params.token)
     if (!userInfo) {

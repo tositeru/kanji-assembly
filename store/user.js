@@ -8,11 +8,17 @@ export const state = () => ({
 
 export const mutations = {
   setAuthToken(state, authToken) {
-    state.auth = authToken
-  },
-  setUserParameters(state, { name, email }) {
-    state.name = name
-    state.email = email
+    if (typeof authToken !== 'string') {
+      consola.error('detect invalid auth token')
+      state.auth = null
+      return
+    }
+
+    if (authToken === 'null' || authToken === 'undefined') {
+      state.auth = null
+    } else {
+      state.auth = authToken
+    }
   }
 }
 
@@ -49,7 +55,7 @@ export const actions = {
         Cookie.set('auth', res.data.token, { expires: 10 })
       }
 
-      return Object.assign(res.data, {isSuccessed: true})
+      return Object.assign(res.data, { isSuccessed: true })
     } catch (error) {
       consola.error('Failed user login', error)
       return {
@@ -67,9 +73,12 @@ export const actions = {
     }
 
     try {
-      await axios.post('/user/logout', {
+      const res = await axios.post('/user/logout', {
         token: state.auth
       })
+      if (res.status !== 200) {
+        throw new Error(`Invalid Response status ${res.status}`)
+      }
 
       commit('setAuthToken', null)
       Cookie.set('auth', null)
@@ -95,6 +104,9 @@ export const actions = {
         }
       })
       return res.data
-    } catch (error) {}
+    } catch (error) {
+      consola.error('Failed to get user parameters', error)
+      return null
+    }
   }
 }
