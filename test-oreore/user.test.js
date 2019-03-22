@@ -353,7 +353,7 @@ const tests = [
     {
       const voidParamRes = await axios.post('user/signup', {})
       assert.ok(
-        !voidParamRes.status === 200,
+        voidParamRes.status !== 200,
         'failed to reject void parameters...'
       )
     }
