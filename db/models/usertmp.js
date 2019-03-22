@@ -12,15 +12,23 @@ module.exports = (sequelize, DataTypes) => {
   const UserTmp = sequelize.define('UserTmp', TABLE_DEFINETION, {})
   UserTmp.associate = async function(models) {}
 
+  function expirationTime() {
+    return moment().subtract(10, 'minutes')
+  }
+
   /**
    * 同じパラメータがないか数えす
    * @param {string} name
    * @param {string} email
    */
   UserTmp.isExist = async function(name, email) {
+    const expirationDate = expirationTime()
     const count = await UserTmp.count({
       where: {
-        [sequelize.Op.or]: [{ name: name }, { email: email }]
+        [sequelize.Op.or]: [{ name: name }, { email: email }],
+        updatedAt: {
+          [sequelize.Op.gte]: expirationDate.toISOString()
+        }
       }
     })
     return count > 0
@@ -86,7 +94,7 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   UserTmp.isValidToken = async token => {
-    const expirationDate = moment().subtract(10, 'minutes')
+    const expirationDate = expirationTime()
     const usertmp = await UserTmp.findOne({
       where: {
         token: token,
