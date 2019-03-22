@@ -28,7 +28,9 @@ export const actions = {
       email: email,
       password: password
     })
-    return res.data
+    return {
+      isSuccessed: res.status === 200
+    }
   },
 
   async login({ commit }, { email, password }) {
@@ -42,12 +44,12 @@ export const actions = {
         email: email,
         password: password
       })
-      if (res.data.isSuccessed) {
+      if (res.status === 200) {
         commit('setAuthToken', res.data.token)
         Cookie.set('auth', res.data.token, { expires: 10 })
       }
 
-      return res.data
+      return Object.assign(res.data, {isSuccessed: true})
     } catch (error) {
       consola.error('Failed user login', error)
       return {

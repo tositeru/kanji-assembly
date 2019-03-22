@@ -110,7 +110,6 @@ router.post('/login', refusalAuthToken, async function(req, res) {
     if (!loginParam.doValid) {
       logError(req, 'invalid paramaters')
       return res.status(202).json({
-        isSuccessed: false,
         message: 'パラメータが正しくありません'
       })
     }
@@ -119,19 +118,16 @@ router.post('/login', refusalAuthToken, async function(req, res) {
     if (!token) {
       logError(req, 'failed to authentication')
       return res.status(202).json({
-        isSuccessed: false,
         message: '認証に失敗しました'
       })
     }
 
     return res.json({
-      isSuccessed: true,
       token: token
     })
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
-      isSuccessed: false,
       message: 'サーバー側の不具合により認証に失敗しました'
     })
   }
@@ -143,18 +139,14 @@ router.post('/logout', requireAuthToken, async function(req, res) {
     if (!isSuccessed) {
       logError(req, 'failed to logout')
       return res.status(202).json({
-        isSuccessed: false,
         message: 'ログアウトに失敗しました'
       })
     }
 
-    return res.json({
-      isSuccessed: true
-    })
+    return res.json()
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
-      isSuccessed: false,
       message: 'サーバー側の不具合によりログアウトに失敗しました'
     })
   }
@@ -166,18 +158,14 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
     if (!isSuccessed) {
       logError(req, 'failed to delete user')
       return res.status(202).json({
-        isSuccessed: false,
         message: 'ユーザーの削除に失敗しました'
       })
     }
 
-    return res.json({
-      isSuccessed: true
-    })
+    return res.json()
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
-      isSuccessed: false,
       message: 'サーバー側の不具合によりユーザーの削除に失敗しました'
     })
   }
@@ -188,14 +176,14 @@ router.get('/get', requireAuthToken, async function(req, res) {
     const user = await User.getByAuthToken(req.userAuth)
     logInfo(req, `OK`)
     return res.json({
-      isSuccessed: true,
       name: user.name,
       email: user.email
     })
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
-      isSuccessed: false,
+      message: 'サーバー側の不具合により情報の取得に失敗しました'
+    })
       message: 'サーバー側の不具合により情報の取得に失敗しました'
     })
   }
@@ -223,7 +211,6 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     if (!signupParam.doValid()) {
       logError(req, 'invalid parameters')
       return res.status(202).json({
-        isSuccessed: false,
         messages: 'パラメータが正しくありません'
       })
     }
@@ -231,7 +218,6 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     if (await User.isExist(signupParam.name, signupParam.email)) {
       logError(req, 'invalid parameters because has duplicate parameter')
       return res.status(202).json({
-        isSuccessed: false,
         messages: '既存のユーザーと同じ情報を持っています'
       })
     }
@@ -240,7 +226,6 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     if (typeof tokenOrError !== 'string') {
       logError(req, 'failed to add user')
       return res.status(202).json({
-        isSuccessed: false,
         messages: tokenOrError
       })
     }
@@ -257,7 +242,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
       sender.send(`${req.body.name} <${req.body.email}>`)
     }
 
-    return res.json({ isSuccessed: true })
+    return res.json()
   } catch (error) {
     logError(req, error)
     return res.status(500).send('Bad')

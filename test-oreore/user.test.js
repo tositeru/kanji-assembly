@@ -163,7 +163,7 @@ const tests = [
       consola.log('request user/signup')
       const res = await axios.post('user/signup', param.toObj())
       assert.ok(
-        res.data.isSuccessed,
+        res.status === 200,
         `invalid response parameter... msg=${res.data.messages}`
       )
 
@@ -353,7 +353,7 @@ const tests = [
     {
       const voidParamRes = await axios.post('user/signup', {})
       assert.ok(
-        !voidParamRes.data.isSuccessed,
+        !voidParamRes.status === 200,
         'failed to reject void parameters...'
       )
     }
@@ -366,7 +366,7 @@ const tests = [
       )
       const sameNameRes = await axios.post('user/signup', param)
       assert.ok(
-        !sameNameRes.data.isSuccessed,
+        sameNameRes.status !== 200,
         'failed to reject the parameter including the already used name...'
       )
 
@@ -377,7 +377,7 @@ const tests = [
       )
       const sameNameRes2 = await axios.post('user/signup', param2)
       assert.ok(
-        !sameNameRes2.data.isSuccessed,
+        sameNameRes2.status !== 200,
         'failed to reject the parameter including the already used name in Usertmp...'
       )
     }
@@ -390,7 +390,7 @@ const tests = [
       )
       const sameEmailRes = await axios.post('user/signup', param)
       assert.ok(
-        !sameEmailRes.data.isSuccessed,
+        sameEmailRes.status !== 200,
         'failed to reject the parameter including the already used email...'
       )
 
@@ -401,7 +401,7 @@ const tests = [
       )
       const sameEmailRes2 = await axios.post('user/signup', param2)
       assert.ok(
-        !sameEmailRes2.data.isSuccessed,
+        sameEmailRes2.status !== 200,
         'failed to reject the parameter including the already used email in Usertmp...'
       )
     }
@@ -467,7 +467,7 @@ const tests = [
     {
       const res = await axios.post('user/logout', {})
       assert.ok(
-        res.status === 403 && !res.data.isSuccessed,
+        res.status === 403,
         'failed to logout without auth token...'
       )
     }
@@ -480,7 +480,7 @@ const tests = [
       )
       const res = await axios.post('user/logout', { token: invalidAuthToken })
       assert.ok(
-        res.status === 202 && !res.data.isSuccessed,
+        res.status === 202,
         'failed to logout with a invalid auth token...'
       )
     }
@@ -499,7 +499,7 @@ const tests = [
     {
       const res = await axios.post('user/logout', { token: authToken })
       assert.ok(
-        res.status === 202 && !res.data.isSuccessed,
+        res.status === 202,
         'failed to reject the logout user ...'
       )
     }
@@ -508,7 +508,7 @@ const tests = [
     // POST /user/delete without auth token
     const res = await axios.delete('user/delete')
     assert.ok(
-      res.status === 403 && !res.data.isSuccessed,
+      res.status === 403,
       'failed to delete without auth token...'
     )
 
@@ -529,7 +529,7 @@ const tests = [
         }
       })
       assert.ok(
-        res.status === 202 && !res.data.isSuccessed,
+        res.status === 202,
         'failed to delete without auth token...'
       )
     }
