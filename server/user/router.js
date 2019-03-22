@@ -76,7 +76,7 @@ function requireAuthToken(req, res, next) {
   const userAuth = getAuthToken(req)
   if (!userAuth) {
     logError(req, 'requireAuthToken: Detect Suspicious Access...')
-    return res.status(403).json({
+    return res.status(401).json({
       message: '認証に失敗しました。'
     })
   }
@@ -109,7 +109,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
     )
     if (!loginParam.doValid) {
       logError(req, 'invalid paramaters')
-      return res.status(202).json({
+      return res.status(403).json({
         message: 'パラメータが正しくありません'
       })
     }
@@ -117,7 +117,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
     const token = await User.login(loginParam)
     if (!token) {
       logError(req, 'failed to authentication')
-      return res.status(202).json({
+      return res.status(403).json({
         message: '認証に失敗しました'
       })
     }
@@ -138,7 +138,7 @@ router.post('/logout', requireAuthToken, async function(req, res) {
     const isSuccessed = await User.logout(req.userAuth)
     if (!isSuccessed) {
       logError(req, 'failed to logout')
-      return res.status(202).json({
+      return res.status(403).json({
         message: 'ログアウトに失敗しました'
       })
     }
@@ -157,7 +157,7 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
     const isSuccessed = await User.delete(req.userAuth)
     if (!isSuccessed) {
       logError(req, 'failed to delete user')
-      return res.status(202).json({
+      return res.status(403).json({
         message: 'ユーザーの削除に失敗しました'
       })
     }
@@ -200,7 +200,7 @@ router.post('/update', requireAuthToken, async function(req, res) {
     //同名のユーザーやメールアドレスがないか確認する
     if (await User.isExist(updateParam.name, updateParam.email)) {
       logError(req, 'invalid parameters because has duplicate parameter')
-      return res.status(202).json({
+      return res.status(403).json({
         messages: '既存のユーザーと同じ情報を持っています'
       })
     }
@@ -208,7 +208,7 @@ router.post('/update', requireAuthToken, async function(req, res) {
     const updateResult = await User.updateByParam(req.userAuth, updateParam)
     if (!updateResult) {
       logError(req, 'Failed to update user parameters...')
-      return res.status(202).json({})
+      return res.status(403).json({})
     }
     //updateResult.prevParam
 
@@ -250,14 +250,14 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     )
     if (!signupParam.doValid()) {
       logError(req, 'invalid parameters')
-      return res.status(202).json({
+      return res.status(403).json({
         messages: 'パラメータが正しくありません'
       })
     }
 
     if (await User.isExist(signupParam.name, signupParam.email)) {
       logError(req, 'invalid parameters because has duplicate parameter')
-      return res.status(202).json({
+      return res.status(403).json({
         messages: '既存のユーザーと同じ情報を持っています'
       })
     }
@@ -265,7 +265,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     const tokenOrError = await UserTmp.add(signupParam)
     if (typeof tokenOrError !== 'string') {
       logError(req, 'failed to add user')
-      return res.status(202).json({
+      return res.status(403).json({
         messages: tokenOrError
       })
     }
@@ -306,7 +306,7 @@ router.post('/signup/:token', refusalAuthToken, async function(req, res) {
   } catch (error) {
     logError(req, error)
     res.set('Content-Type', 'text/html')
-    return res.status(202).send('<h1>Failed authentication user...</h1>')
+    return res.status(403).send('<h1>Failed authentication user...</h1>')
   }
 })
 

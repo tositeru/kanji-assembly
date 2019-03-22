@@ -413,7 +413,7 @@ const tests = [
     // POST /user/login with void parameters
     {
       const res = await axios.post('user/login', {})
-      assert.ok(res.status === 202, 'failed to reject the void parameter...')
+      assert.ok(res.status === 403, 'failed to reject the void parameter...')
     }
     // POST /user/login with unexsiting parameters
     {
@@ -423,7 +423,7 @@ const tests = [
       )
       const res = await axios.post('user/login', param)
       assert.ok(
-        res.status === 202,
+        res.status === 403,
         'failed to reject the unexsiting parameter...'
       )
     }
@@ -458,7 +458,7 @@ const tests = [
         'invalid password'
       )
       const res = await axios.post('user/login', param)
-      assert.ok(res.status === 202, 'failed to reject the missing password...')
+      assert.ok(res.status === 403, 'failed to reject the missing password...')
     }
   }),
   new Utils.Test('test invalid POST user/logout', async test => {
@@ -467,7 +467,7 @@ const tests = [
     {
       const res = await axios.post('user/logout', {})
       assert.ok(
-        res.status === 403,
+        res.status === 401,
         'failed to logout without auth token...'
       )
     }
@@ -480,7 +480,7 @@ const tests = [
       )
       const res = await axios.post('user/logout', { token: invalidAuthToken })
       assert.ok(
-        res.status === 202,
+        res.status === 403,
         'failed to logout with a invalid auth token...'
       )
     }
@@ -499,7 +499,7 @@ const tests = [
     {
       const res = await axios.post('user/logout', { token: authToken })
       assert.ok(
-        res.status === 202,
+        res.status === 403,
         'failed to reject the logout user ...'
       )
     }
@@ -508,7 +508,7 @@ const tests = [
     // POST /user/delete without auth token
     const res = await axios.delete('user/delete')
     assert.ok(
-      res.status === 403,
+      res.status === 401,
       'failed to delete without auth token...'
     )
 
@@ -529,7 +529,7 @@ const tests = [
         }
       })
       assert.ok(
-        res.status === 202,
+        res.status === 403,
         'failed to delete without auth token...'
       )
     }
@@ -571,7 +571,7 @@ const tests = [
         }
       })
       assert.ok(
-        res.status === 403,
+        res.status === 401,
         'Failed to reject with invalid auth token...'
       )
     }
@@ -579,7 +579,7 @@ const tests = [
     {
       const res = await axios.get('user/get')
       assert.ok(
-        res.status === 403,
+        res.status === 401,
         'Failed to reject with a empty auth token...'
       )
     }
@@ -655,7 +655,7 @@ const tests = [
         const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
           token: saraToken
         }))
-        assert.ok(res.status === 202, 'Failed to update user info because input ot the invalid oldPassword...')
+        assert.ok(res.status === 403, 'Failed to update user info because input ot the invalid oldPassword...')
       }
       {// invalid input parameters
         let updateParam = new UserDatatype.UpdateParameters(
@@ -668,7 +668,7 @@ const tests = [
         const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
           token: saraToken
         }))
-        assert.ok(res.status === 202, `Invalid Response status... status=${res.status}`)
+        assert.ok(res.status === 403, `Invalid Response status... status=${res.status}`)
       }
       {// invalid auth token
         let updateParam = new UserDatatype.UpdateParameters(
@@ -681,7 +681,7 @@ const tests = [
         const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
           token: 'invalid auth token'
         }))
-        assert.ok(res.status === 403, `Failed to update user info because invalid auth token... data=${res.status}`)
+        assert.ok(res.status === 401, `Failed to update user info because invalid auth token... data=${res.status}`)
       }
       {// already same parameters
         const otherData = new UserDatatype.SignupParameters(
@@ -706,7 +706,7 @@ const tests = [
         const res = await axios.post('user/update', Object.assign(updateParam.toObj(),{
           token: saraToken
         }))
-        assert.ok(res.status === 202, `Failed to update user info because already same parameters... status=${res.status}`)
+        assert.ok(res.status === 403, `Failed to update user info because already same parameters... status=${res.status}`)
       }
     }
   })
