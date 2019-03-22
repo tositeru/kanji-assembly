@@ -97,9 +97,11 @@ module.exports = (sequelize, DataTypes) => {
     expiredSecond: 60 * 60 * 24 * 30
   }
 
-  User.createAuthToken = userId => {
+  User.createAuthToken = (userId, createdAt, updatedAt) => {
     const payload = {
-      id: userId
+      id: userId,
+      createdAt: createdAt,
+      updatedAt: updatedAt
     }
     const rsaKey = {
       key: AUTH_TOKEN.private,
@@ -136,10 +138,10 @@ module.exports = (sequelize, DataTypes) => {
         return null
       }
 
-      const token = User.createAuthToken(user.id)
-
       user.setDataValue('status', User.STATUS_LOGIN)
       await user.save()
+
+      const token = User.createAuthToken(user.id, user.createdAt, user.updatedAt)
 
       logger.info(
         'Login',
@@ -158,6 +160,8 @@ module.exports = (sequelize, DataTypes) => {
       const user = await User.findOne({
         where: {
           id: userAuth.id,
+          createdAt: userAuth.createdAt,
+          updatedAt: userAuth.updatedAt,
           status: User.STATUS_LOGIN
         }
       })
@@ -183,7 +187,9 @@ module.exports = (sequelize, DataTypes) => {
     try {
       const user = await User.findOne({
         where: {
-          id: userAuth.id
+          id: userAuth.id,
+          createdAt: userAuth.createdAt,
+          updatedAt: userAuth.updatedAt,
         }
       })
       if (!user) {
@@ -205,20 +211,23 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  User.getById = async id => {
+  User.getByAuthToken = async authToken => {
     try {
       const user = await User.findOne({
         where: {
-          id: id
+          id: authToken.id,
+          createdAt: authToken.createdAt,
+          updatedAt: authToken.updatedAt
         }
       })
       return user
     } catch (error) {
+      logger.error('GetByID', `token=${JSON.stringify(authToken)}`, error)
       logger.error('GetByID', `id=${id}`, error)
     }
   }
 
-  User.validateAuthToken = token => {
+  User.parseAuthToken = token => {
     let userData = null
     const options = {
       algorithms: [JWT_ALGORITHM],
@@ -230,7 +239,9 @@ module.exports = (sequelize, DataTypes) => {
         return
       }
       userData = {
-        id: decoded.id
+        id: decoded.id,
+        createdAt: decoded.createdAt,
+        updatedAt: decoded.updatedAt
       }
     })
     return userData

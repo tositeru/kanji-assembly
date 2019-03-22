@@ -54,7 +54,7 @@ function logInfo(req, message) {
 function getAuthToken(req) {
   const token = req.body.token || req.headers['x-access-token']
   if (token) {
-    const userAuth = User.validateAuthToken(token)
+    const userAuth = User.parseAuthToken(token)
     return userAuth
   }
 
@@ -185,7 +185,7 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
 
 router.get('/get', requireAuthToken, async function(req, res) {
   try {
-    const user = await User.getById(req.userAuth.id)
+    const user = await User.getByAuthToken(req.userAuth)
     logInfo(req, `OK`)
     return res.json({
       isSuccessed: true,

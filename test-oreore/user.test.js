@@ -472,7 +472,9 @@ const tests = [
     // POST /user/logout with a invalid auth token
     {
       const invalidAuthToken = User.createAuthToken(
-        'hog0934ug4jhg9[43ujgv[03u4wg'
+        'hog0934ug4jhg9[43ujgv[03u4wg',
+        '2000-01-01 12:30:30',
+        '2001-02-01 13:32:32',
       )
       const res = await axios.post('user/logout', { token: invalidAuthToken })
       assert.ok(
@@ -512,7 +514,11 @@ const tests = [
     // POST /user/delete without invalid auth token
     // POST /user/delete without auth token
     {
-      const invalidAuthToken = User.createAuthToken('eu9302ur390ru0439ur3094')
+      const invalidAuthToken = User.createAuthToken(
+        'eu9302ur390ru0439ur3094',
+        '2000-01-02 12:30:30',
+        '2001-02-03 13:32:32',
+      )
       const res = await axios.delete('user/delete', {
         data: {
           token: invalidAuthToken
