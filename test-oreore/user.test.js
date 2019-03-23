@@ -13,6 +13,7 @@ const { User, UserTmp } = require('../db/database')
 const Utils = require('./utils')
 
 axios.defaults.baseURL = 'http://localhost:3003'
+axios.defaults.timeout = 1000
 
 // テスト用にどんなレスポンスでも例外を投げないようにしている
 axios.defaults.validateStatus = _ => {
@@ -164,7 +165,9 @@ const tests = [
       const res = await axios.post('user/signup', param.toObj())
       assert.ok(
         res.status === 200,
-        `invalid response parameter... msg=${res.data.messages}`
+        `invalid response parameter... status=${res.status} msg=${
+          res.data.messages
+        }`
       )
 
       // query token by direct database
@@ -671,14 +674,14 @@ const tests = [
       }
       {
         // invalid input parameters
-        const updateParam = new UserDatatype.UpdateParameters(
-          '', // invalid name
+        let updateParam = new UserDatatype.UpdateParameters(
+          '',
           'tom2', // invalid email
-          '', // invalid password
+          '',
           saraData.password,
           false
         )
-        const res = await axios.post(
+        let res = await axios.post(
           'user/update',
           Object.assign(updateParam.toObj(), {
             token: saraToken
@@ -687,6 +690,62 @@ const tests = [
         assert.ok(
           res.status === 403,
           `Invalid Response status... status=${res.status}`
+        )
+        assert.ok(
+          res.data.messages.email,
+          `Do not exsit error messages.email... messages=${JSON.stringify(
+            res.data.messages
+          )}`
+        )
+
+        // invalid name
+        updateParam = new UserDatatype.UpdateParameters(
+          'aa', // invalid name
+          '',
+          '',
+          saraData.password,
+          false
+        )
+        res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: saraToken
+          })
+        )
+        assert.ok(
+          res.status === 403,
+          `Invalid Response status... status=${res.status}`
+        )
+        assert.ok(
+          res.data.messages.name,
+          `Do not exsit error messages.name... messages=${JSON.stringify(
+            res.data.messages
+          )}`
+        )
+
+        // invalid password
+        updateParam = new UserDatatype.UpdateParameters(
+          '',
+          '',
+          'aaa', // invalid password
+          saraData.password,
+          false
+        )
+        res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: saraToken
+          })
+        )
+        assert.ok(
+          res.status === 403,
+          `Invalid Response status... status=${res.status}`
+        )
+        assert.ok(
+          res.data.messages.password,
+          `Do not exsit error messages.password... messages=${JSON.stringify(
+            res.data.messages
+          )}`
         )
       }
       {

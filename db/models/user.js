@@ -42,12 +42,20 @@ module.exports = (sequelize, DataTypes) => {
   const JWT_ALGORITHM = 'RS256'
 
   User.isExist = async function(name, email) {
-    const count = await User.count({
-      where: {
-        [sequelize.Op.or]: [{ name: name }, { email: email }]
-      }
-    })
-    return count > 0
+    try {
+      const count = await User.count({
+        where: {
+          [sequelize.Op.or]: [{ name: name || '' }, { email: email || '' }]
+        }
+      })
+      return count > 0
+    } catch (error) {
+      logger.error(
+        'isExist',
+        `name=${name},email=${email},error=${error}`,
+        'query error'
+      )
+    }
   }
 
   User.createWithUserInfo = async function(userInfo) {
@@ -242,6 +250,10 @@ module.exports = (sequelize, DataTypes) => {
    */
   User.updateByParam = async (authToken, updateParam) => {
     try {
+      if (!CommonValidator.validatePassword(updateParam.oldPassword)) {
+        throw new Error('Invalid oldPassword...')
+      }
+
       const user = await User.findOne({
         where: {
           id: authToken.id,
@@ -259,7 +271,7 @@ module.exports = (sequelize, DataTypes) => {
       )
 
       if (user.password !== encryptPassword.hashedPassword) {
-        throw new Error('invalid password')
+        throw new Error('Failed to authenicate password...')
       }
 
       // パラメータ更新
@@ -273,6 +285,10 @@ module.exports = (sequelize, DataTypes) => {
         user.email = updateParam.email
       }
       if (updateParam.password) {
+        if (!CommonValidator.validatePassword(updateParam.password)) {
+          throw new Error('Invalid password...')
+        }
+
         prevParam.hashedPassword = {
           hashed: user.password,
           salt: user.password2
@@ -297,7 +313,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     } catch (error) {
       logger.error('UpdateByParam', `token=${JSON.stringify(authToken)}`, error)
-      return CommonValidator.createErrorMessage(updateParam)
+      return CommonValidator.createErrorMessage(updateParam, error)
     }
   }
 

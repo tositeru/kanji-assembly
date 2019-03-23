@@ -31,10 +31,12 @@ const logger = new Logger('API /user')
  * @param {Request} req
  * @param {string} message
  */
-function logError(req, message) {
+function logError(req, message, appendParam = null) {
   logger.error(
     req.originalUrl,
-    `IP='${req.ip},IPS='${req.ips} auth=${JSON.stringify(req.userAuth)}'`,
+    `IP='${req.ip},IPS='${req.ips} auth=${JSON.stringify(
+      req.userAuth
+    )}' ${JSON.stringify(appendParam)}`,
     message
   )
 }
@@ -58,15 +60,15 @@ function getAuthToken(req) {
     return userAuth
   }
 
-  const parsedCookie = cookieparser.parse(req.headers.cookie)
-  if (parsedCookie.auth) {
-    if (parsedCookie.auth === 'undefined' ||
-        parsedCookie.auth === 'null') {
-      return null
+  if (req.headers.cookie) {
+    const parsedCookie = cookieparser.parse(req.headers.cookie)
+    if (parsedCookie.auth) {
+      if (parsedCookie.auth === 'undefined' || parsedCookie.auth === 'null') {
+        return null
+      }
+      return parsedCookie.auth
     }
-    return parsedCookie.auth
   }
-
   return null
 }
 
@@ -78,16 +80,21 @@ function getAuthToken(req) {
  * @param {*} next
  */
 function requireAuthToken(req, res, next) {
-  const userAuth = getAuthToken(req)
-  if (!userAuth) {
-    logError(req, 'requireAuthToken: Detect Suspicious Access...')
-    return res.status(401).json({
-      message: '認証に失敗しました。'
-    })
+  try {
+    const userAuth = getAuthToken(req)
+    if (!userAuth) {
+      logError(req, 'requireAuthToken: Detect Suspicious Access...')
+      return res.status(401).json({
+        message: '認証に失敗しました。'
+      })
+    }
+    // リクエストにユーザーデータを付けて次のコールバックで使えるようにする
+    req.userAuth = userAuth
+    next()
+  } catch (error) {
+    logError(req, `requireAuthToken: internal error...${error}`)
+    return res.status(500)
   }
-  // リクエストにユーザーデータを付けて次のコールバックで使えるようにする
-  req.userAuth = userAuth
-  next()
 }
 
 /**
@@ -97,13 +104,18 @@ function requireAuthToken(req, res, next) {
  * @param {*} next
  */
 function refusalAuthToken(req, res, next) {
-  const userAuth = getAuthToken(req)
-  if (userAuth) {
-    logError(req, 'refusalAuthToken: Detect Suspicious Access...')
-    return res.redirect('/user')
-  }
+  try {
+    const userAuth = getAuthToken(req)
+    if (userAuth) {
+      logError(req, 'refusalAuthToken: Detect Suspicious Access...')
+      return res.redirect('/user')
+    }
 
-  next()
+    next()
+  } catch (error) {
+    logError(req, `refusalAuthToken: internal error...${error}`)
+    return res.status(500)
+  }
 }
 
 router.post('/login', refusalAuthToken, async function(req, res) {
@@ -199,7 +211,6 @@ router.get('/get', requireAuthToken, async function(req, res) {
 
 router.post('/update', requireAuthToken, async function(req, res) {
   try {
-
     const user = await User.getByAuthToken(req.userAuth)
 
     const updateParam = new Datatype.UpdateParameters(
@@ -211,19 +222,21 @@ router.post('/update', requireAuthToken, async function(req, res) {
     )
 
     if (!updateParam.doValid()) {
-      console.log(updateParam)
-      logError(req, 'pass to invalid parameters...')
+      logError(req, 'pass to invalid parameters...', updateParam.toObj())
       return res.status(403).json({
         messages: {
-          caption: '不当な値が渡されました。',
+          caption: '不当な値が渡されました。'
         }
       })
     }
-
-    //同名のユーザーやメールアドレスがないか確認する
+    // 同名のユーザーやメールアドレスがないか確認する
     if (updateParam.name || updateParam.email) {
       if (await User.isExist(updateParam.name, updateParam.email)) {
-        logError(req, 'invalid parameters because has duplicate parameter')
+        logError(
+          req,
+          'invalid parameters because has duplicate parameter',
+          updateParam.toObj()
+        )
         return res.status(403).json({
           messages: {
             caption: '既存のユーザーと同じ情報を持っています'
@@ -232,26 +245,29 @@ router.post('/update', requireAuthToken, async function(req, res) {
       }
     }
 
-    const updateResult = await User.updateByParam(req.userAuth, updateParam)
-    if (!updateResult.newToken) {
-      logError(req, 'Failed to update user parameters...')
+    const updateResultOrErrorMessages = await User.updateByParam(
+      req.userAuth,
+      updateParam
+    )
+    if (!updateResultOrErrorMessages.newToken) {
+      logError(req, 'Failed to update user parameters...', updateParam.toObj())
       return res.status(403).json({
-        messages: updateResult
+        messages: updateResultOrErrorMessages
       })
     }
-    //updateResult.prevParam
+    // 編集前のパラメータをどこかに保存しておく updateResult.prevParam
 
-    //更新したことを伝えるメールを送信する
+    // 更新したことを伝えるメールを送信する
     if (process.NODE_ENV !== 'test' || updateParam.doSendMail) {
       // TODO
     }
 
     logInfo(req, 'OK')
     return res.json({
-      token: updateResult.newToken
+      token: updateResultOrErrorMessages.newToken
     })
   } catch (error) {
-    logError(req, error)
+    logError(req, error, req.body)
     return res.status(500).send({
       message: {
         caption: 'サーバー側の不具合により情報の取得に失敗しました'
