@@ -1,0 +1,11 @@
+ここに開発用のHTTPSのSSLキーをおいてください。
+
+develop.key : 秘密鍵
+develop.crt : 公開鍵
+auth-token/authtoken.pem
+auth-token/authtoken.pub
+
+openssl genrsa -out ssl/develop.key 4096
+openssl req -new -key server.key > server.csr
+openssl x509 -in ssl/develop.csr -days 565000 -req -signkey ssl/develop.key > ssl/develop.crt
+

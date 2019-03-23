@@ -51,9 +51,11 @@ module.exports = {
   */
   axios: {
     // See https://github.com/nuxt-community/axios-module#options
+    https: true
   },
 
   router: {
+    middleware: ['cookie'], // クッキーデータをVuexに移すためのミドルウェア
     extendRoutes(routes, resolve) {
       routes.push({
         path: '*',
@@ -70,6 +72,7 @@ module.exports = {
   ** Build configuration
   */
   build: {
+    sourceMap: true,
     postcss: {
       preset: {
         features: {
@@ -81,18 +84,8 @@ module.exports = {
     ** You can extend webpack config here
     */
     extend(config, ctx) {
-      // Run ESLint on save
       if (ctx.isDev && ctx.isClient) {
         config.mode = 'development'
-        // config.module.rules.push({
-        //   enforce: 'pre',
-        //   test: /\.(js|vue)$/,
-        //   loader: 'eslint-loader',
-        //   exclude: /(node_modules)/,
-        //   options: {
-        //     fix: true,
-        //   },
-        // })
       }
     }
   },
@@ -104,5 +97,10 @@ module.exports = {
       cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
     }
   },
-  serverMiddleware: ['redirect-ssl', bodyParser.json(), '~/server/Q/router.js']
+  serverMiddleware: [
+    'redirect-ssl',
+    bodyParser.json(),
+    '~/server/Q/router.js',
+    '~/server/user/router.js'
+  ]
 }

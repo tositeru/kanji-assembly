@@ -1,29 +1,22 @@
 'use strict'
 const moment = require('moment')
 const consola = require('consola')
+const { TABLE_DEFINETION } = require('../tables/questions.js')
 
 module.exports = (sequelize, DataTypes) => {
-  const Questions = sequelize.define(
-    'Questions',
-    {
-      show_date: DataTypes.DATEONLY,
-      date_id: DataTypes.TINYINT,
-      type: DataTypes.TINYINT
-    },
-    {
-      getterMethods: {
-        show_date() {
-          return this.getDataValue(`show_date`)
-        },
-        show_id() {
-          return this.getDataValue(`show_id`)
-        },
-        type() {
-          return this.getDataValue(`type`)
-        }
+  const Questions = sequelize.define('Questions', TABLE_DEFINETION, {
+    getterMethods: {
+      show_date() {
+        return this.getDataValue(`show_date`)
+      },
+      show_id() {
+        return this.getDataValue(`show_id`)
+      },
+      type() {
+        return this.getDataValue(`type`)
       }
     }
-  )
+  })
   Questions.associate = function(models) {}
 
   Questions.getByDate = async (date, dateId) => {
