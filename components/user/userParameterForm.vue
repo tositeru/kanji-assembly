@@ -29,20 +29,20 @@ import validator from 'validator'
 import axios from 'axios'
 
 export class Parameters {
-	constructor(name, email, password) {
-		this.name = name
-		this.email = email
-		this.password = password
-		this.confirmPassword = ''
-		this.oldPassword = null
-	}
+  constructor(name, email, password) {
+    this.name = name
+    this.email = email
+    this.password = password
+    this.confirmPassword = ''
+    this.oldPassword = null
+  }
 
-	/**
-	 * @param {string} value
-	 */
-	setOldPassword(value) {
-		this.oldPassword = value
-	}
+  /**
+   * @param {string} value
+   */
+  setOldPassword(value) {
+    this.oldPassword = value
+  }
 }
 
 export class ErrorMessages {
@@ -64,28 +64,30 @@ export class ErrorMessages {
     } else {
       this.caption = caption
     }
-    console.log(errorMessages, this.caption)
   }
 
   hasError() {
-    return this.name || this.email || this.password || this.oldPassword || this.caption
+    return (
+      this.name ||
+      this.email ||
+      this.password ||
+      this.oldPassword ||
+      this.caption
+    )
   }
 }
 
-
 const MIN_PASSWORD_LENGTH = 8
 export default {
-	props: {
-		params: {
-			type: Parameters
-    },
+  props: {
+    params: Parameters,
     errorMessage: ErrorMessages
-	},
-	data: function() {
-		return {
+  },
+  data: function() {
+    return {
       showPassword: false,
-			showConfirmPassword: false,
-			showOldPassword: false,
+      showConfirmPassword: false,
+      showOldPassword: false,
       doCheckingName: false,
       doCheckingEmail: false,
       rules: {
@@ -98,9 +100,9 @@ export default {
           this.params.password === v || 'パスワードが一致しません'
       },
       innerErrorMessage: {}
-		}
-	},
-	computed: {
+    }
+  },
+  computed: {
     progressPassword() {
       return Math.min(
         100,
@@ -111,9 +113,9 @@ export default {
       const messages = ['error', 'warning', 'success']
       return messages[Math.floor(this.progressPassword / 50)]
     }
-	},
-	methods: {
-		async changeName() {
+  },
+  methods: {
+    async changeName() {
       this.doCheckingName = true
       this.innerErrorMessage.name = (await checkUserParam(
         'name',
@@ -133,7 +135,7 @@ export default {
         : null
       this.doCheckingEmail = false
     }
-	}
+  }
 }
 
 async function checkUserParam(key, param) {
@@ -153,7 +155,6 @@ async function checkUserParam(key, param) {
   }
   this.doCheckingEmail = false
 }
-
 </script>
 <style lang="sass" scoped>
 

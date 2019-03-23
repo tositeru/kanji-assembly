@@ -109,7 +109,7 @@ export const actions = {
       return null
     }
   },
-  async update({state, commit}, {name, email, password, oldPassword}) {
+  async update({ state, commit }, { name, email, password, oldPassword }) {
     try {
       const res = await axios.post('user/update', {
         name: name,

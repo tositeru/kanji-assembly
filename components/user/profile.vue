@@ -40,53 +40,60 @@
 
 <script>
 import consola from 'consola'
-import {default as UserParameterForm, Parameters, ErrorMessages} from './userParameterForm.vue'
+import {
+  default as UserParameterForm,
+  Parameters,
+  ErrorMessages
+} from './userParameterForm.vue'
 
 export default {
-	components: {
-		'user-parameter-form': UserParameterForm
-	},
+  components: {
+    'user-parameter-form': UserParameterForm
+  },
   data() {
     return {
-			loading: true,
-			user: {
-				name: '',
-				email: ''
-			},
-			updateInfo: new Parameters('', '', ''),
-			errorMessages: new ErrorMessages,
-      doEdit: false,
-		}
+      loading: true,
+      user: {
+        name: '',
+        email: ''
+      },
+      updateInfo: new Parameters('', '', ''),
+      errorMessages: new ErrorMessages(),
+      doEdit: false
+    }
   },
   async mounted() {
     const userParameter = await this.$store.dispatch('user/get')
     if (userParameter) {
       this.user.name = userParameter.name
-			this.user.email = userParameter.email
-			
-			this.updateInfo.name = this.user.name
-			this.updateInfo.email = this.user.email
-		}
-		this.updateInfo.setOldPassword('')
-		this.loading = false
+      this.user.email = userParameter.email
+
+      this.updateInfo.name = this.user.name
+      this.updateInfo.email = this.user.email
+    }
+    this.updateInfo.setOldPassword('')
+    this.loading = false
   },
   methods: {
     async send() {
-			try {
-				const result = await this.$store.dispatch('user/update', this.updateInfo)
-				if (result.isSuccessed) {
-					this.doEdit = false
-					this.errorMessages.set({}, null)
+      try {
+        const result = await this.$store.dispatch(
+          'user/update',
+          this.updateInfo
+        )
+        if (result.isSuccessed) {
+          this.doEdit = false
+          this.errorMessages.set({}, null)
 
-					this.user.name = this.updateInfo.name
-					this.user.email = this.updateInfo.email
-				} else {
-					this.errorMessages.set(result.errors, '更新に失敗しました。')
-				}
-			} catch (error) {
-				consola.error('Failed to update user parameters', error)
-				this.errorMessages.set({}, '更新に失敗しました。')
-			}
+          this.user.name = this.updateInfo.name
+          this.user.email = this.updateInfo.email
+        } else {
+          this.errorMessages.set(result.errors, '更新に失敗しました。')
+        }
+      } catch (error) {
+        consola.error('Failed to update user parameters', error)
+        this.errorMessages.set({}, '更新に失敗しました。')
+      }
     },
     async logout() {
       const result = await this.$store.dispatch('user/logout')
