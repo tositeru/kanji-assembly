@@ -2,8 +2,10 @@
 	div
 		h2(class="display-3 text-xs-center") マイページ
 			v-btn(@click="logout") ログアウト
-		v-layout(align-center justify-center)
-			v-flex(v-flex xs12 sm6)
+		v-layout(v-if="loading")
+			| 読み込み中
+		v-layout(v-else align-center justify-center)
+			v-flex(xs12 sm6)
 				v-card(flat class="elevation-3")
 					v-card-text()
 						v-list(two-line)
@@ -24,46 +26,67 @@
 						v-dialog(v-model="doEdit" persistent max-width="60%")
 							v-form
 								v-card
-									v-card-title 編集
+									v-card-title(class="display-1 text-xs-center") ユーザー情報の変更
 									v-card-text
-										v-text-field(v-model="user.name" label="名前" type="text" :rules="[rules.required]")
-										v-text-field(v-model="user.password" label="パスワード" :type="showPassword1 ? 'text' : 'password'"
-											:append-icon="showPassword1 ? 'visibility_off' : 'visibility'" @click:append="showPassword1 = !showPassword1"
-											:rules="[rules.required, rules.min]" counter)
+										user-parameter-form(v-bind:params="this.updateInfo" v-bind:errorMessage="this.errorMessages")
+										v-flex(v-if="errorMessages.hasError()")
+											div(class="error error--text text--lighten-4 display-1 text-xs-center") {{ errorMessages.caption }}
+									div(class="text-xs-center caption") 変更する必要のないものは入力しなくても大丈夫です('現在のパスワード'は除く)
 									v-card-actions
 										v-spacer
-										v-btn(color="blue darken-1" flat @click="doEdit = false") Close
-										v-btn(color="blue darken-1" flat @click="save()") Save
+										v-btn(color="blue darken-1" flat @click="doEdit = false") キャンセル
+										v-btn(color="blue darken-1" flat @click="send()") 送信
 </template>
 
 <script>
+import consola from 'consola'
+import {default as UserParameterForm, Parameters, ErrorMessages} from './userParameterForm.vue'
+
 export default {
+	components: {
+		'user-parameter-form': UserParameterForm
+	},
   data() {
     return {
-      showPassword1: false,
+			loading: true,
+			user: {
+				name: '',
+				email: ''
+			},
+			updateInfo: new Parameters('', '', ''),
+			errorMessages: new ErrorMessages,
       doEdit: false,
-      user: {
-        name: '',
-        email: '',
-        password: ''
-      },
-      rules: {
-        required: v => !!v || '入力してください',
-        min: v => v.length > 8 || '8文字以上にしてください'
-      }
-    }
+		}
   },
   async mounted() {
     const userParameter = await this.$store.dispatch('user/get')
     if (userParameter) {
       this.user.name = userParameter.name
-      this.user.email = userParameter.email
-    }
+			this.user.email = userParameter.email
+			
+			this.updateInfo.name = this.user.name
+			this.updateInfo.email = this.user.email
+		}
+		this.updateInfo.setOldPassword('')
+		this.loading = false
   },
   methods: {
-    save() {
-      alert('please implement')
-      this.doEdit = false
+    async send() {
+			try {
+				const result = await this.$store.dispatch('user/update', this.updateInfo)
+				if (result.isSuccessed) {
+					this.doEdit = false
+					this.errorMessages.set({}, null)
+
+					this.user.name = this.updateInfo.name
+					this.user.email = this.updateInfo.email
+				} else {
+					this.errorMessages.set(result.errors, '更新に失敗しました。')
+				}
+			} catch (error) {
+				consola.error('Failed to update user parameters', error)
+				this.errorMessages.set({}, '更新に失敗しました。')
+			}
     },
     async logout() {
       const result = await this.$store.dispatch('user/logout')

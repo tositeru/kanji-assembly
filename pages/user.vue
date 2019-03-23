@@ -1,7 +1,7 @@
 <template lang="pug">
   v-container()
     g-title(class="text-xs-center")
-    profile()
+    user-profile()
 </template>
 
 <script>
@@ -10,7 +10,7 @@ import Profile from '~/components/user/profile.vue'
 export default {
   middleware: ['authenticated'],
   components: {
-    profile: Profile
+    'user-profile': Profile
   },
   data() {
     return {}

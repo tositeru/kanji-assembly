@@ -72,6 +72,7 @@ module.exports = {
   ** Build configuration
   */
   build: {
+    sourceMap: true,
     postcss: {
       preset: {
         features: {

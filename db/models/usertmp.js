@@ -2,7 +2,6 @@
 const crypto = require('crypto')
 const moment = require('moment')
 const { TABLE_DEFINETION } = require('../tables/user-tmps.js')
-// const ServerDataTypes = require('../../server/user/defineDatatypes')
 const Logger = require('../../src/log')
 const commonCrypt = require('./commonCrypt')
 

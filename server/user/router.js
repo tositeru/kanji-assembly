@@ -199,26 +199,45 @@ router.get('/get', requireAuthToken, async function(req, res) {
 
 router.post('/update', requireAuthToken, async function(req, res) {
   try {
+
+    const user = await User.getByAuthToken(req.userAuth)
+
     const updateParam = new Datatype.UpdateParameters(
-      req.body.name,
-      req.body.email,
-      req.body.password,
+      user.name !== req.body.name ? req.body.name : null,
+      user.email !== req.body.email ? req.body.email : null,
+      req.body.password || null,
       req.body.oldPassword,
-      req.body.doSendMail
+      req.body.doSendMail || true
     )
 
-    //同名のユーザーやメールアドレスがないか確認する
-    if (await User.isExist(updateParam.name, updateParam.email)) {
-      logError(req, 'invalid parameters because has duplicate parameter')
+    if (!updateParam.doValid()) {
+      console.log(updateParam)
+      logError(req, 'pass to invalid parameters...')
       return res.status(403).json({
-        messages: '既存のユーザーと同じ情報を持っています'
+        messages: {
+          caption: '不当な値が渡されました。',
+        }
       })
     }
 
+    //同名のユーザーやメールアドレスがないか確認する
+    if (updateParam.name || updateParam.email) {
+      if (await User.isExist(updateParam.name, updateParam.email)) {
+        logError(req, 'invalid parameters because has duplicate parameter')
+        return res.status(403).json({
+          messages: {
+            caption: '既存のユーザーと同じ情報を持っています'
+          }
+        })
+      }
+    }
+
     const updateResult = await User.updateByParam(req.userAuth, updateParam)
-    if (!updateResult) {
+    if (!updateResult.newToken) {
       logError(req, 'Failed to update user parameters...')
-      return res.status(403).json({})
+      return res.status(403).json({
+        messages: updateResult
+      })
     }
     //updateResult.prevParam
 
@@ -234,7 +253,9 @@ router.post('/update', requireAuthToken, async function(req, res) {
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
-      message: 'サーバー側の不具合により情報の取得に失敗しました'
+      message: {
+        caption: 'サーバー側の不具合により情報の取得に失敗しました'
+      }
     })
   }
 })

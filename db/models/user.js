@@ -6,6 +6,7 @@ const uuid = require('uuid/v4')
 const { TABLE_DEFINETION } = require('../tables/users.js')
 const Logger = require('../../src/log')
 const CommonCrypt = require('./commonCrypt')
+const CommonValidator = require('./userValidateCommon')
 
 const logger = new Logger('DB Users', 'debug')
 
@@ -296,7 +297,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     } catch (error) {
       logger.error('UpdateByParam', `token=${JSON.stringify(authToken)}`, error)
-      return null
+      return CommonValidator.createErrorMessage(updateParam)
     }
   }
 

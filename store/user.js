@@ -108,5 +108,30 @@ export const actions = {
       consola.error('Failed to get user parameters', error)
       return null
     }
+  },
+  async update({state, commit}, {name, email, password, oldPassword}) {
+    try {
+      const res = await axios.post('user/update', {
+        name: name,
+        email: email,
+        password: password,
+        oldPassword: oldPassword,
+        token: state.auth
+      })
+      if (res.status === 200) {
+        commit('setAuthToken', res.data.token)
+        Cookie.set('auth', res.data.token, { expires: 10 })
+      }
+
+      return {
+        isSuccessed: true,
+        token: res.data.token
+      }
+    } catch (error) {
+      return {
+        isSuccessed: false,
+        errors: error.response.data.messages
+      }
+    }
   }
 }
