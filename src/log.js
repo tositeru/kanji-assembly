@@ -1,8 +1,11 @@
 const log4js = require('log4js')
 
+const logFilepath =
+  process.env.NODE_ENV === 'test' ? 'server-test.log' : 'server.log'
+
 log4js.configure({
   appenders: {
-    everything: { type: 'file', filename: 'server-log.log' }
+    everything: { type: 'file', filename: logFilepath }
   },
   categories: {
     default: { appenders: ['everything'], level: 'debug' }

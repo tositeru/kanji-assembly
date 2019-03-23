@@ -13,6 +13,7 @@ const { User, UserTmp } = require('../db/database')
 const Utils = require('./utils')
 
 axios.defaults.baseURL = 'http://localhost:3003'
+axios.defaults.timeout = 1000
 
 // テスト用にどんなレスポンスでも例外を投げないようにしている
 axios.defaults.validateStatus = _ => {
@@ -27,7 +28,7 @@ async function init() {
   shell.exec('yarn sequelize db:migrate:undo:all --env=test')
   shell.exec('yarn sequelize db:migrate --env=test')
   // データベースにテスト用データを挿入する
-  shell.exec('yarn sequelize db:seed --env=test --seed test-users')
+  // shell.exec('yarn sequelize db:seed --env=test --seed test-users')
 
   // サーバーが起動しているか確認
   consola.info('check server running')
@@ -89,7 +90,7 @@ async function createUser(name, email, password) {
   })
   const token = tmpUser.token
 
-  await axios.post(`user/signup/${token}`, {
+  await axios.get(`user/signup/${token}`, {
     headers: {
       'Content-Type': 'text/html'
     }
@@ -104,20 +105,37 @@ async function createUser(name, email, password) {
  * ユーザートークンからユーザーを削除する
  * @param {string} userToken
  */
-async function deleteUser(userToken) {
-  try {
-    await axios.delete('user/delete', {
-      data: {
-        token: userToken
-      },
-      headers: {
-        'Content-Length': userToken.length
-      }
-    })
+// async function deleteUser(userToken) {
+//   try {
+//     await axios.delete('user/delete', {
+//       data: {
+//         token: userToken
+//       },
+//       headers: {
+//         'Content-Length': userToken.length
+//       }
+//     })
 
-    return true
+//     return true
+//   } catch (error) {
+//     assert.ok(false, `Failed to delete user... ${error}`)
+//     return false
+//   }
+// }
+
+/**
+ * 全ユーザーを削除する
+ */
+async function deleteAllUser() {
+  try {
+    await User.destroy({
+      where: {
+        deletedAt: null
+      },
+      force: true
+    })
   } catch (error) {
-    assert.ok(false, `Failed to delete user... ${error}`)
+    consola.error('全ユーザーの削除に失敗')
     return false
   }
 }
@@ -146,8 +164,10 @@ const tests = [
       consola.log('request user/signup')
       const res = await axios.post('user/signup', param.toObj())
       assert.ok(
-        res.data.isSuccessed,
-        `invalid response parameter... msg=${res.data.messages}`
+        res.status === 200,
+        `invalid response parameter... status=${res.status} msg=${
+          res.data.messages
+        }`
       )
 
       // query token by direct database
@@ -160,7 +180,7 @@ const tests = [
       const token = tmpUser.token
 
       consola.log('request user/signup/<valid_token>')
-      const signupResponse = await axios.post(`user/signup/${token}`, {
+      const signupResponse = await axios.get(`user/signup/${token}`, {
         headers: {
           'Content-Type': 'text/html'
         }
@@ -193,7 +213,10 @@ const tests = [
       const logoutResposnse = await axios.post('user/logout', {
         token: loginResposnse.data.token
       })
-      assert.ok(logoutResposnse.status === 200, 'Failed to logout...')
+      assert.ok(
+        logoutResposnse.status === 200,
+        `Failed to logout... status=${logoutResposnse.status}`
+      )
     }
 
     // DELETE /user/delete with auth token
@@ -217,21 +240,21 @@ const tests = [
           'Content-Length': loginResposnse.data.token.length
         }
       })
-      assert.ok(deleteResposnse.status === 200, 'Failed to delete user...')
+      assert.ok(
+        deleteResposnse.status === 200,
+        `Failed to delete user... status=${deleteResposnse.status}`
+      )
     }
   }),
   new Utils.Test('test user/check', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+
     const userData = {
       name: 'Tom',
       email: 'tom@mail.com',
       password: '1234567890'
     }
-    const tokenTom = await createUser(
-      userData.name,
-      userData.email,
-      userData.password
-    )
-    test.pushDisposeObject(tokenTom, deleteUser)
+    await createUser(userData.name, userData.email, userData.password)
 
     {
       const { data } = await axios.get('user/check', {
@@ -307,18 +330,14 @@ const tests = [
     }
   }),
   new Utils.Test('test invalid post user/signup', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
       'tomtomtomtom',
       { doSendMail: false }
     )
-    const tomToken = await createUser(
-      tomData.name,
-      tomData.email,
-      tomData.password
-    )
-    test.pushDisposeObject(tomToken, deleteUser)
+    await createUser(tomData.name, tomData.email, tomData.password)
 
     const reservingUserData = new UserDatatype.SignupParameters(
       'Sara',
@@ -335,7 +354,7 @@ const tests = [
     {
       const voidParamRes = await axios.post('user/signup', {})
       assert.ok(
-        !voidParamRes.data.isSuccessed,
+        voidParamRes.status !== 200,
         'failed to reject void parameters...'
       )
     }
@@ -348,7 +367,7 @@ const tests = [
       )
       const sameNameRes = await axios.post('user/signup', param)
       assert.ok(
-        !sameNameRes.data.isSuccessed,
+        sameNameRes.status !== 200,
         'failed to reject the parameter including the already used name...'
       )
 
@@ -359,7 +378,7 @@ const tests = [
       )
       const sameNameRes2 = await axios.post('user/signup', param2)
       assert.ok(
-        !sameNameRes2.data.isSuccessed,
+        sameNameRes2.status !== 200,
         'failed to reject the parameter including the already used name in Usertmp...'
       )
     }
@@ -372,7 +391,7 @@ const tests = [
       )
       const sameEmailRes = await axios.post('user/signup', param)
       assert.ok(
-        !sameEmailRes.data.isSuccessed,
+        sameEmailRes.status !== 200,
         'failed to reject the parameter including the already used email...'
       )
 
@@ -383,7 +402,7 @@ const tests = [
       )
       const sameEmailRes2 = await axios.post('user/signup', param2)
       assert.ok(
-        !sameEmailRes2.data.isSuccessed,
+        sameEmailRes2.status !== 200,
         'failed to reject the parameter including the already used email in Usertmp...'
       )
     }
@@ -391,10 +410,11 @@ const tests = [
   // POST /user/login with void parameters
   // POST /user/login with invalid parameters
   new Utils.Test('test invalid post user/login', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
     // POST /user/login with void parameters
     {
       const res = await axios.post('user/login', {})
-      assert.ok(res.status === 202, 'failed to reject the void parameter...')
+      assert.ok(res.status === 403, 'failed to reject the void parameter...')
     }
     // POST /user/login with unexsiting parameters
     {
@@ -404,7 +424,7 @@ const tests = [
       )
       const res = await axios.post('user/login', param)
       assert.ok(
-        res.status === 202,
+        res.status === 403,
         'failed to reject the unexsiting parameter...'
       )
     }
@@ -420,7 +440,6 @@ const tests = [
       tomData.email,
       tomData.password
     )
-    test.pushDisposeObject(authToken, deleteUser)
     {
       const param = new UserDatatype.LoginParameters(
         tomData.email,
@@ -440,26 +459,26 @@ const tests = [
         'invalid password'
       )
       const res = await axios.post('user/login', param)
-      assert.ok(res.status === 202, 'failed to reject the missing password...')
+      assert.ok(res.status === 403, 'failed to reject the missing password...')
     }
   }),
   new Utils.Test('test invalid POST user/logout', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
     // POST /user/logout without auth token
     {
       const res = await axios.post('user/logout', {})
-      assert.ok(
-        res.status === 403 && !res.data.isSuccessed,
-        'failed to logout without auth token...'
-      )
+      assert.ok(res.status === 401, 'failed to logout without auth token...')
     }
     // POST /user/logout with a invalid auth token
     {
       const invalidAuthToken = User.createAuthToken(
-        'hog0934ug4jhg9[43ujgv[03u4wg'
+        'hog0934ug4jhg9[43ujgv[03u4wg',
+        '2000-01-01 12:30:30',
+        '2001-02-01 13:32:32'
       )
       const res = await axios.post('user/logout', { token: invalidAuthToken })
       assert.ok(
-        res.status === 202 && !res.data.isSuccessed,
+        res.status === 403,
         'failed to logout with a invalid auth token...'
       )
     }
@@ -474,28 +493,25 @@ const tests = [
       tomData.email,
       tomData.password
     )
-    test.pushDisposeObject(authToken, deleteUser)
     await axios.post('user/logout', { token: authToken })
     {
       const res = await axios.post('user/logout', { token: authToken })
-      assert.ok(
-        res.status === 202 && !res.data.isSuccessed,
-        'failed to reject the logout user ...'
-      )
+      assert.ok(res.status === 403, 'failed to reject the logout user ...')
     }
   }),
   new Utils.Test('test invalid POST user/delete', async test => {
     // POST /user/delete without auth token
     const res = await axios.delete('user/delete')
-    assert.ok(
-      res.status === 403 && !res.data.isSuccessed,
-      'failed to delete without auth token...'
-    )
+    assert.ok(res.status === 401, 'failed to delete without auth token...')
 
     // POST /user/delete without invalid auth token
     // POST /user/delete without auth token
     {
-      const invalidAuthToken = User.createAuthToken('eu9302ur390ru0439ur3094')
+      const invalidAuthToken = User.createAuthToken(
+        'eu9302ur390ru0439ur3094',
+        '2000-01-02 12:30:30',
+        '2001-02-03 13:32:32'
+      )
       const res = await axios.delete('user/delete', {
         data: {
           token: invalidAuthToken
@@ -504,10 +520,286 @@ const tests = [
           'Content-Length': invalidAuthToken.length
         }
       })
+      assert.ok(res.status === 403, 'failed to delete without auth token...')
+    }
+  }),
+  new Utils.Test('Test GET /user/get', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+
+    const tomData = new UserDatatype.SignupParameters(
+      'Tom',
+      'tom@mail.com',
+      'tomtomtomtom',
+      { doSendMail: false }
+    )
+    const tomToken = await createUser(
+      tomData.name,
+      tomData.email,
+      tomData.password
+    )
+
+    // success
+    {
+      const res = await axios.get('user/get', {
+        headers: {
+          'x-access-token': tomToken
+        }
+      })
       assert.ok(
-        res.status === 202 && !res.data.isSuccessed,
-        'failed to delete without auth token...'
+        res.status === 200 &&
+          res.data.name === tomData.name &&
+          res.data.email === tomData.email,
+        'failed to get user parameters...'
       )
+    }
+    // invalid auth token
+    {
+      const res = await axios.get('user/get', {
+        headers: {
+          'x-access-token': 'jd903jf9h43wt9g0t3y4vtnhg 09[n3uvt0934un tv90'
+        }
+      })
+      assert.ok(
+        res.status === 401,
+        'Failed to reject with invalid auth token...'
+      )
+    }
+    // none auth token
+    {
+      const res = await axios.get('user/get')
+      assert.ok(
+        res.status === 401,
+        'Failed to reject with a empty auth token...'
+      )
+    }
+  }),
+  new Utils.Test('Test POST /user/update', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+    // success
+    {
+      const tomData = new UserDatatype.SignupParameters(
+        'Tom',
+        'tom@mail.com',
+        'tomtomtomtom',
+        { doSendMail: false }
+      )
+      const tomToken = await createUser(
+        tomData.name,
+        tomData.email,
+        tomData.password
+      )
+
+      const updateParam = new UserDatatype.UpdateParameters(
+        'Tom2',
+        'tom2@mail.com',
+        'tom2tom2tom2tom2',
+        tomData.password,
+        false
+      )
+      const res = await axios.post(
+        'user/update',
+        Object.assign(updateParam.toObj(), {
+          token: tomToken
+        })
+      )
+      const newAuthToken = res.data.token
+      assert.ok(res.status === 200, 'Failed to update user parameters...')
+      assert.ok(
+        newAuthToken && newAuthToken !== tomToken,
+        'Failed to update user parameters by the invalid auth token...'
+      )
+
+      // name and email check
+      const nameAndEmailRes = await axios.get('user/get', {
+        headers: {
+          'x-access-token': newAuthToken
+        }
+      })
+      assert.ok(
+        nameAndEmailRes.status === 200,
+        `Failed to update user parameters by the invalid auth token... status=${
+          nameAndEmailRes.status
+        }`
+      )
+      assert.ok(
+        nameAndEmailRes.data.name === updateParam.name,
+        `Failed to update the name of user... name=${nameAndEmailRes.data.name}`
+      )
+      assert.ok(
+        nameAndEmailRes.data.email === updateParam.email,
+        `Failed to update the email of user... name=${
+          nameAndEmailRes.data.email
+        }`
+      )
+
+      // password check
+      const passwordRes = await axios.post('user/login', {
+        email: updateParam.email,
+        password: updateParam.password
+      })
+      assert.ok(passwordRes.status === 200, 'Failed to update user password...')
+    }
+    // invalid parameter
+    {
+      const saraData = new UserDatatype.SignupParameters(
+        'Sara',
+        'Sara@mail.com',
+        'tomtomtomtom',
+        { doSendMail: false }
+      )
+      const saraToken = await createUser(
+        saraData.name,
+        saraData.email,
+        saraData.password
+      )
+      {
+        // invalid oldPassword
+        const updateParam = new UserDatatype.UpdateParameters(
+          'Sara2',
+          'tom2@mail.com',
+          'tom2tom2tom2tom2',
+          'hifh94ur94ur490tjepgj',
+          false
+        )
+        const res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: saraToken
+          })
+        )
+        assert.ok(
+          res.status === 403,
+          'Failed to update user info because input ot the invalid oldPassword...'
+        )
+      }
+      {
+        // invalid input parameters
+        let updateParam = new UserDatatype.UpdateParameters(
+          '',
+          'tom2', // invalid email
+          '',
+          saraData.password,
+          false
+        )
+        let res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: saraToken
+          })
+        )
+        assert.ok(
+          res.status === 403,
+          `Invalid Response status... status=${res.status}`
+        )
+        assert.ok(
+          res.data.messages.email,
+          `Do not exsit error messages.email... messages=${JSON.stringify(
+            res.data.messages
+          )}`
+        )
+
+        // invalid name
+        updateParam = new UserDatatype.UpdateParameters(
+          'aa', // invalid name
+          '',
+          '',
+          saraData.password,
+          false
+        )
+        res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: saraToken
+          })
+        )
+        assert.ok(
+          res.status === 403,
+          `Invalid Response status... status=${res.status}`
+        )
+        assert.ok(
+          res.data.messages.name,
+          `Do not exsit error messages.name... messages=${JSON.stringify(
+            res.data.messages
+          )}`
+        )
+
+        // invalid password
+        updateParam = new UserDatatype.UpdateParameters(
+          '',
+          '',
+          'aaa', // invalid password
+          saraData.password,
+          false
+        )
+        res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: saraToken
+          })
+        )
+        assert.ok(
+          res.status === 403,
+          `Invalid Response status... status=${res.status}`
+        )
+        assert.ok(
+          res.data.messages.password,
+          `Do not exsit error messages.password... messages=${JSON.stringify(
+            res.data.messages
+          )}`
+        )
+      }
+      {
+        // invalid auth token
+        const updateParam = new UserDatatype.UpdateParameters(
+          'Sara', // invalid name
+          'sara@mail.com', // invalid email
+          '',
+          saraData.password,
+          false
+        )
+        const res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: 'invalid auth token'
+          })
+        )
+        assert.ok(
+          res.status === 401,
+          `Failed to update user info because invalid auth token... data=${
+            res.status
+          }`
+        )
+      }
+      {
+        // already same parameters
+        const otherData = new UserDatatype.SignupParameters(
+          'Other',
+          'other@mail.com',
+          'otherother',
+          { doSendMail: false }
+        )
+        await createUser(otherData.name, otherData.email, otherData.password)
+
+        const updateParam = new UserDatatype.UpdateParameters(
+          otherData.name, // invalid name
+          otherData.email, // invalid email
+          '',
+          saraData.password,
+          false
+        )
+        const res = await axios.post(
+          'user/update',
+          Object.assign(updateParam.toObj(), {
+            token: saraToken
+          })
+        )
+        assert.ok(
+          res.status === 403,
+          `Failed to update user info because already same parameters... status=${
+            res.status
+          }`
+        )
+      }
     }
   })
 ]

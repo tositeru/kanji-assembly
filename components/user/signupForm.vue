@@ -14,7 +14,7 @@
           v-text-field(v-model="signupInfo.name" label="名前" type="text" :rules="[rules.required]" :loading="doCheckingName" @change='changeName' append-icon='check_circle')
             template(v-slot:append)
               div(v-if="errorMessage.name" class="error--text") {{ errorMessage.name }}
-          v-text-field(v-model="signupInfo.email" label="メール" type="text" :rules="[rules.required, rules.email]" :loading="doCheckingEmail" @change='changeEmail' append-icon='check_circle')
+          v-text-field(v-model="signupInfo.email" label="メールアドレス" type="text" :rules="[rules.required, rules.email]" :loading="doCheckingEmail" @change='changeEmail' append-icon='check_circle')
             template(v-slot:append)
               div(v-if="errorMessage.email" class="error--text") {{ errorMessage.email }}
           v-text-field(v-model="signupInfo.password" label="パスワード" :type="showPassword1 ? 'text' : 'password'"
@@ -104,8 +104,8 @@ export default {
         'name',
         this.signupInfo.name
       ))
-        ? null
-        : '同じ名前のユーザーが存在しています'
+        ? '同じ名前のユーザーが存在しています'
+        : null
       this.doCheckingName = false
     },
     async changeEmail() {
@@ -114,8 +114,8 @@ export default {
         'email',
         this.signupInfo.email
       ))
-        ? null
-        : '同じメールアドレスのユーザーが存在しています'
+        ? '同じメールアドレスのユーザーが存在しています'
+        : null
       this.doCheckingEmail = false
     }
   }
@@ -130,6 +130,7 @@ async function checkUserParam(key, param) {
       },
       params: params
     })
+
     return res.data.status[key]
   } catch (err) {
     alert(err)

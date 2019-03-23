@@ -8,7 +8,17 @@ export const state = () => ({
 
 export const mutations = {
   setAuthToken(state, authToken) {
-    state.auth = authToken
+    if (typeof authToken !== 'string') {
+      consola.error('detect invalid auth token')
+      state.auth = null
+      return
+    }
+
+    if (authToken === 'null' || authToken === 'undefined') {
+      state.auth = null
+    } else {
+      state.auth = authToken
+    }
   }
 }
 
@@ -24,7 +34,9 @@ export const actions = {
       email: email,
       password: password
     })
-    return res.data
+    return {
+      isSuccessed: res.status === 200
+    }
   },
 
   async login({ commit }, { email, password }) {
@@ -38,12 +50,12 @@ export const actions = {
         email: email,
         password: password
       })
-      if (res.data.isSuccessed) {
+      if (res.status === 200) {
         commit('setAuthToken', res.data.token)
         Cookie.set('auth', res.data.token, { expires: 10 })
       }
 
-      return res.data
+      return Object.assign(res.data, { isSuccessed: true })
     } catch (error) {
       consola.error('Failed user login', error)
       return {
@@ -61,9 +73,12 @@ export const actions = {
     }
 
     try {
-      await axios.post('/user/logout', {
+      const res = await axios.post('/user/logout', {
         token: state.auth
       })
+      if (res.status !== 200) {
+        throw new Error(`Invalid Response status ${res.status}`)
+      }
 
       commit('setAuthToken', null)
       Cookie.set('auth', null)
@@ -75,6 +90,47 @@ export const actions = {
       return {
         isSuccessed: false,
         message: 'ログアウトに失敗しました'
+      }
+    }
+  },
+  async get({ state, commit }) {
+    if (!state.auth) {
+      return
+    }
+    try {
+      const res = await axios.get('/user/get', {
+        headers: {
+          'x-access-token': state.auth
+        }
+      })
+      return res.data
+    } catch (error) {
+      consola.error('Failed to get user parameters', error)
+      return null
+    }
+  },
+  async update({ state, commit }, { name, email, password, oldPassword }) {
+    try {
+      const res = await axios.post('user/update', {
+        name: name,
+        email: email,
+        password: password,
+        oldPassword: oldPassword,
+        token: state.auth
+      })
+      if (res.status === 200) {
+        commit('setAuthToken', res.data.token)
+        Cookie.set('auth', res.data.token, { expires: 10 })
+      }
+
+      return {
+        isSuccessed: true,
+        token: res.data.token
+      }
+    } catch (error) {
+      return {
+        isSuccessed: false,
+        errors: error.response.data.messages
       }
     }
   }

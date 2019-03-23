@@ -2,9 +2,9 @@
 const crypto = require('crypto')
 const moment = require('moment')
 const { TABLE_DEFINETION } = require('../tables/user-tmps.js')
-// const ServerDataTypes = require('../../server/user/defineDatatypes')
 const Logger = require('../../src/log')
 const commonCrypt = require('./commonCrypt')
+const CommonValidator = require('./userValidateCommon')
 
 const logger = new Logger('DB UserTmp', 'debug')
 
@@ -12,15 +12,23 @@ module.exports = (sequelize, DataTypes) => {
   const UserTmp = sequelize.define('UserTmp', TABLE_DEFINETION, {})
   UserTmp.associate = async function(models) {}
 
+  function expirationTime() {
+    return moment().subtract(10, 'minutes')
+  }
+
   /**
    * 同じパラメータがないか数えす
    * @param {string} name
    * @param {string} email
    */
   UserTmp.isExist = async function(name, email) {
+    const expirationDate = expirationTime()
     const count = await UserTmp.count({
       where: {
-        [sequelize.Op.or]: [{ name: name }, { email: email }]
+        [sequelize.Op.or]: [{ name: name }, { email: email }],
+        updatedAt: {
+          [sequelize.Op.gte]: expirationDate.toISOString()
+        }
       }
     })
     return count > 0
@@ -32,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
    */
   UserTmp.add = async signupParam => {
     try {
+      // 他のエラーも一緒に判定できるようにあとで行っている
+      if (!CommonValidator.validatePassword(signupParam.password)) {
+        throw new RangeError('使用できないパスワードの長さを登録に使用しました')
+      }
+
       const token = crypto.randomBytes(64).toString('hex')
       const encryptPassword = commonCrypt.encryptPassword(signupParam.password)
       await UserTmp.upsert({
@@ -41,14 +54,6 @@ module.exports = (sequelize, DataTypes) => {
         email: signupParam.email,
         token: token
       })
-
-      // 他のエラーも一緒に判定できるようにあとで行っている
-      if (
-        signupParam.password.length < 8 ||
-        signupParam.password.length > 255
-      ) {
-        throw new RangeError('使用できないパスワードの長さを登録に使用しました')
-      }
 
       logger.info(
         'Add',
@@ -74,10 +79,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
       // パスワードはハッシュ化しているので直接確認する
-      if (
-        signupParam.password.length < 8 ||
-        signupParam.password.length > 255
-      ) {
+      if (!CommonValidator.validatePassword(signupParam.password)) {
         errorMessages.password = '使用できないパスワードを登録に使用しました'
       }
       logger.error('Add', `name=${signupParam.name},email=${signupParam.email}`)
@@ -86,7 +88,7 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   UserTmp.isValidToken = async token => {
-    const expirationDate = moment().subtract(10, 'minutes')
+    const expirationDate = expirationTime()
     const usertmp = await UserTmp.findOne({
       where: {
         token: token,

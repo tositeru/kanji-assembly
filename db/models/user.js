@@ -6,6 +6,7 @@ const uuid = require('uuid/v4')
 const { TABLE_DEFINETION } = require('../tables/users.js')
 const Logger = require('../../src/log')
 const CommonCrypt = require('./commonCrypt')
+const CommonValidator = require('./userValidateCommon')
 
 const logger = new Logger('DB Users', 'debug')
 
@@ -41,12 +42,20 @@ module.exports = (sequelize, DataTypes) => {
   const JWT_ALGORITHM = 'RS256'
 
   User.isExist = async function(name, email) {
-    const count = await User.count({
-      where: {
-        [sequelize.Op.or]: [{ name: name }, { email: email }]
-      }
-    })
-    return count > 0
+    try {
+      const count = await User.count({
+        where: {
+          [sequelize.Op.or]: [{ name: name || '' }, { email: email || '' }]
+        }
+      })
+      return count > 0
+    } catch (error) {
+      logger.error(
+        'isExist',
+        `name=${name},email=${email},error=${error}`,
+        'query error'
+      )
+    }
   }
 
   User.createWithUserInfo = async function(userInfo) {
@@ -97,9 +106,11 @@ module.exports = (sequelize, DataTypes) => {
     expiredSecond: 60 * 60 * 24 * 30
   }
 
-  User.createAuthToken = userId => {
+  User.createAuthToken = (userId, createdAt, updatedAt) => {
     const payload = {
-      id: userId
+      id: userId,
+      createdAt: createdAt,
+      updatedAt: updatedAt
     }
     const rsaKey = {
       key: AUTH_TOKEN.private,
@@ -136,10 +147,14 @@ module.exports = (sequelize, DataTypes) => {
         return null
       }
 
-      const token = User.createAuthToken(user.id)
-
       user.setDataValue('status', User.STATUS_LOGIN)
       await user.save()
+
+      const token = User.createAuthToken(
+        user.id,
+        user.createdAt,
+        user.updatedAt
+      )
 
       logger.info(
         'Login',
@@ -153,16 +168,18 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  User.logout = async userData => {
+  User.logout = async userAuth => {
     try {
       const user = await User.findOne({
         where: {
-          id: userData.id,
+          id: userAuth.id,
+          createdAt: userAuth.createdAt,
+          updatedAt: userAuth.updatedAt,
           status: User.STATUS_LOGIN
         }
       })
       if (!user) {
-        logger.error('Logout', `user id=${userData.id}`, 'not find user')
+        logger.error('Logout', `user id=${userAuth.id}`, 'not find user')
         return false
       }
       user.setDataValue('status', User.STATUS_LOGOUT)
@@ -174,20 +191,22 @@ module.exports = (sequelize, DataTypes) => {
       )
       return true
     } catch (error) {
-      logger.error('Logout', `id=${userData.id}`, error)
+      logger.error('Logout', `id=${userAuth.id}`, error)
       return false
     }
   }
 
-  User.delete = async userData => {
+  User.delete = async userAuth => {
     try {
       const user = await User.findOne({
         where: {
-          id: userData.id
+          id: userAuth.id,
+          createdAt: userAuth.createdAt,
+          updatedAt: userAuth.updatedAt
         }
       })
       if (!user) {
-        logger.error('Delete', `user id=${userData.id} `, 'not find user')
+        logger.error('Delete', `user id=${userAuth.id} `, 'not find user')
         return false
       }
       user.setDataValue('status', User.STATUS_LOCKED)
@@ -200,12 +219,105 @@ module.exports = (sequelize, DataTypes) => {
 
       return true
     } catch (error) {
-      logger.error('Delete', `user id=${userData.id}`, error)
+      logger.error('Delete', `user id=${userAuth.id}`, error)
       return false
     }
   }
 
-  User.validateAuthToken = token => {
+  User.getByAuthToken = async authToken => {
+    try {
+      const user = await User.findOne({
+        where: {
+          id: authToken.id,
+          createdAt: authToken.createdAt,
+          updatedAt: authToken.updatedAt
+        }
+      })
+      if (!user) {
+        throw new Error('Not found user...')
+      }
+      return user
+    } catch (error) {
+      logger.error('GetByID', `token=${JSON.stringify(authToken)}`, error)
+      return null
+    }
+  }
+
+  /**
+   * @param {string} UUID
+   * @param {UpdateParameters} 更新パラメータ
+   * @return {Object} newToken: 新しいトークン, prevParam: 更新したパラメータの以前の値
+   */
+  User.updateByParam = async (authToken, updateParam) => {
+    try {
+      if (!CommonValidator.validatePassword(updateParam.oldPassword)) {
+        throw new Error('Invalid oldPassword...')
+      }
+
+      const user = await User.findOne({
+        where: {
+          id: authToken.id,
+          createdAt: authToken.createdAt,
+          updatedAt: authToken.updatedAt
+        }
+      })
+      if (!user) {
+        throw new Error('Miss to find user...')
+      }
+
+      const encryptPassword = CommonCrypt.encryptPassword(
+        updateParam.oldPassword,
+        user.password2
+      )
+
+      if (user.password !== encryptPassword.hashedPassword) {
+        throw new Error('Failed to authenicate password...')
+      }
+
+      // パラメータ更新
+      const prevParam = {}
+      if (updateParam.name) {
+        prevParam.name = user.name
+        user.name = updateParam.name
+      }
+      if (updateParam.email) {
+        prevParam.email = user.email
+        user.email = updateParam.email
+      }
+      if (updateParam.password) {
+        if (!CommonValidator.validatePassword(updateParam.password)) {
+          throw new Error('Invalid password...')
+        }
+
+        prevParam.hashedPassword = {
+          hashed: user.password,
+          salt: user.password2
+        }
+        const encryptPassword = CommonCrypt.encryptPassword(
+          updateParam.password
+        )
+        user.password = encryptPassword.hashedPassword
+        user.password2 = encryptPassword.salt
+      }
+
+      await user.save()
+
+      const newToken = User.createAuthToken(
+        user.id,
+        user.createdAt,
+        user.updatedAt
+      )
+      return {
+        newToken: newToken,
+        prevParam: prevParam
+      }
+    } catch (error) {
+      logger.error('UpdateByParam', `token=${JSON.stringify(authToken)}`, error)
+      return CommonValidator.createErrorMessage(updateParam, error)
+    }
+  }
+
+  User.parseAuthToken = token => {
     let userData = null
     const options = {
       algorithms: [JWT_ALGORITHM],
@@ -217,7 +329,9 @@ module.exports = (sequelize, DataTypes) => {
         return
       }
       userData = {
-        id: decoded.id
+        id: decoded.id,
+        createdAt: decoded.createdAt,
+        updatedAt: decoded.updatedAt
       }
     })
     return userData

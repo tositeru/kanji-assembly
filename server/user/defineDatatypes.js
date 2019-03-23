@@ -99,7 +99,52 @@ class LoginParameters {
   }
 }
 
+/**
+ * ユーザーパラメータ更新時に使うパラメータ
+ * @class
+ */
+class UpdateParameters {
+  /**
+   * @param {string} name
+   * @param {string} email
+   * @param {string} password
+   * @param {string} oldPassword
+   * @param {boolean} doSendMail
+   */
+  constructor(name, email, password, oldPassword, doSendMail = true) {
+    this.name = name
+    this.email = email
+    this.password = password
+    this.oldPassword = oldPassword
+    this.doSendMail = doSendMail
+  }
+
+  /**
+   * JSON形式に変換する
+   */
+  toObj() {
+    return {
+      name: this.name,
+      email: this.email,
+      password: this.password,
+      oldPassword: this.oldPassword,
+      doSendMail: this.doSendMail
+    }
+  }
+
+  /**
+   * 使用できる状態にあるかチェック
+   */
+  doValid() {
+    if (!this.oldPassword) {
+      return false
+    }
+    return this.name || this.email || this.password
+  }
+}
+
 module.exports = {
   SignupParameters: SignupParameters,
-  LoginParameters: LoginParameters
+  LoginParameters: LoginParameters,
+  UpdateParameters: UpdateParameters
 }
