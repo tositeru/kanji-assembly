@@ -132,21 +132,21 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       })
     }
 
-    const token = await User.login(loginParam)
-    if (!token) {
+    const result = await User.login(loginParam)
+    if (!result) {
       logError(req, 'failed to authentication')
       return res.status(403).json({
         message: '認証に失敗しました'
       })
     }
-
+    const { user, token } = result
     if (loginParam.doSendMail) {
       const htmlContent = MailSender.getLoginMailContent(token)
       const sender = new MailSender(
         '漢字組み立て工場　ログインしました',
         htmlContent
       )
-      sender.send(`${req.body.name} <${req.body.email}>`)
+      sender.send(`${user.name}さま <${user.email}>`)
     }
 
     logInfo(req, `email=${loginParam.email}`)

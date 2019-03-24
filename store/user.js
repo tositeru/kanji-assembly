@@ -60,7 +60,7 @@ export const actions = {
       consola.error('Failed user login', error)
       return {
         isSuccessed: false,
-        messages: {
+        message: error.response.data.message || {
           network: 'ログインに失敗しました。'
         }
       }
