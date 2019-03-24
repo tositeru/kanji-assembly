@@ -40,8 +40,7 @@
 
 <script>
 import consola from 'consola'
-import {
-  default as UserParameterForm,
+import UserParameterForm, {
   Parameters,
   ErrorMessages
 } from './userParameterForm.vue'

@@ -1,5 +1,7 @@
+const path = require('path')
 const consola = require('consola')
 const nodemailer = require('nodemailer')
+const pug = require('pug')
 const striptags = require('striptags')
 const Logger = require('../../src/log')
 
@@ -11,8 +13,12 @@ const baseURL = 'https://localhost:3000'
  * 各メールのテンプレート
  */
 const MAIL_TEMPLATE = {
-  auth: pug.compileFile(path.resolve(__dirname, 'templates/authMailTemplate.pug')),
-  login: pug.compileFile(path.resolve(__dirname, 'templates/loginMailTemplate.pug'))
+  auth: pug.compileFile(
+    path.resolve(__dirname, 'templates/authMailTemplate.pug')
+  ),
+  login: pug.compileFile(
+    path.resolve(__dirname, 'templates/loginMailTemplate.pug')
+  )
 }
 
 /**
@@ -26,7 +32,7 @@ class MailSender {
 
   /**
    * タイトル設定
-   * @param {string} subject 
+   * @param {string} subject
    */
   setSubject(subject) {
     this._subject = subject
@@ -34,7 +40,7 @@ class MailSender {
 
   /**
    * メール本文の設定。plainテキストは自動生成されます。
-   * @param {string} html 
+   * @param {string} html
    */
   setContents(html) {
     this._html = html
@@ -50,7 +56,7 @@ class MailSender {
     if (process.env.NODE_ENV === 'test') {
       sendWhenNoneSenderMailAccount(to) // for test
       return
-    } 
+    }
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
@@ -61,7 +67,7 @@ class MailSender {
         pass: 'Q$zcMGJM"{D5:+3y5i%n^Y&.h#MkLfVG'
       }
     })
-    
+
     const message = {
       from: '漢字組み立て工場 <kanji.assembly@gmail.com>',
       to: to,
@@ -76,7 +82,11 @@ class MailSender {
         return
       }
 
-      logger.info('Success', `id=${info.messageId},to=${to},subject=${this._subject}`, `response: ${response}`)
+      logger.info(
+        'Success',
+        `id=${info.messageId},to=${to},subject=${this._subject}`,
+        `response: ${response}`
+      )
     })
   }
 
@@ -103,9 +113,7 @@ class MailSender {
  */
 function sendWhenNoneSenderMailAccount(to) {
   // テスト用にEthereal Emailを使っている。
-  consola.log(
-    '!!Use Ethereal Email for test. Please replace my mail account!!'
-  )
+  consola.log('!!Use Ethereal Email for test. Please replace my mail account!!')
 
   nodemailer.createTestAccount((err, account) => {
     if (err) {

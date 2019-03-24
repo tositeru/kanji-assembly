@@ -9,7 +9,7 @@ export const state = () => ({
 export const mutations = {
   setAuthToken(state, authToken) {
     if (typeof authToken !== 'string') {
-      //consola.error('detect invalid auth token')
+      // consola.error('detect invalid auth token')
       state.auth = null
       return
     }

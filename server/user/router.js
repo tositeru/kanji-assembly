@@ -1,6 +1,4 @@
-const path = require('path')
 const express = require('express')
-const pug = require('pug')
 const log4js = require('log4js')
 const cookieparser = require('cookieparser')
 const utils = require('../utils.js')
@@ -155,7 +153,6 @@ router.post('/login', refusalAuthToken, async function(req, res) {
     return res.json({
       token: token
     })
-
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
