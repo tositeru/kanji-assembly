@@ -339,7 +339,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
         '漢字組み立て工場　ユーザー確認',
         htmlContent
       )
-      sender.send(`${req.body.name} <${req.body.email}>`)
+      sender.send(`${req.body.name}さま <${req.body.email}>`)
     }
 
     return res.json()
