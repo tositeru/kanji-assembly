@@ -68,10 +68,12 @@ class LoginParameters {
    * コンストラクタ
    * @param {string} email
    * @param {string} password
+   * @param {object} options
    */
-  constructor(email, password) {
+  constructor(email, password, options = {}) {
     this._email = email
     this._password = password
+    this._doSendMail = options.doSendMail || true
   }
 
   get email() {
@@ -80,6 +82,9 @@ class LoginParameters {
   get password() {
     return this._password
   }
+  get doSendMail() {
+    return this._doSendMail
+  }
 
   /**
    * JSON形式に変換する
@@ -87,7 +92,8 @@ class LoginParameters {
   toObj() {
     return {
       email: this._email,
-      password: this._password
+      password: this._password,
+      doSendMail: this._doSendMail
     }
   }
 

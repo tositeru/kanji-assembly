@@ -96,7 +96,7 @@ async function createUser(name, email, password) {
     }
   })
 
-  const loginParam = new UserDatatype.LoginParameters(email, password)
+  const loginParam = new UserDatatype.LoginParameters(email, password, {doSendMail: false})
   const loginResposnse = await axios.post('user/login', loginParam.toObj())
   return loginResposnse.data.token
 }
@@ -197,7 +197,8 @@ const tests = [
       consola.log('request user/login')
       const loginParam = new UserDatatype.LoginParameters(
         userData.email,
-        userData.password
+        userData.password,
+        {doSendMail: false}
       )
       const loginResposnse = await axios.post('user/login', loginParam.toObj())
       assert.ok(
@@ -223,7 +224,8 @@ const tests = [
     {
       const loginParam = new UserDatatype.LoginParameters(
         userData.email,
-        userData.password
+        userData.password,
+        {doSendMail: false}
       )
       const loginResposnse = await axios.post('user/login', loginParam.toObj())
       assert.ok(loginResposnse.status === 200, 'Falied to login...')
@@ -413,14 +415,15 @@ const tests = [
     test.pushDisposeObject(null, deleteAllUser)
     // POST /user/login with void parameters
     {
-      const res = await axios.post('user/login', {})
+      const res = await axios.post('user/login', {doSendMail: false})
       assert.ok(res.status === 403, 'failed to reject the void parameter...')
     }
     // POST /user/login with unexsiting parameters
     {
       const param = new UserDatatype.LoginParameters(
         'hgohgpr@jgvoi.com',
-        'aaaaaaaaaaaaaaa'
+        'aaaaaaaaaaaaaaa',
+        {doSendMail: false}
       )
       const res = await axios.post('user/login', param)
       assert.ok(
@@ -443,7 +446,8 @@ const tests = [
     {
       const param = new UserDatatype.LoginParameters(
         tomData.email,
-        tomData.password
+        tomData.password,
+        {doSendMail: false}
       )
       const res = await axios.post('user/login', param.toObj())
       assert.ok(res.status === 200, 'failed to login for already login user...')
@@ -456,7 +460,8 @@ const tests = [
     {
       const param = new UserDatatype.LoginParameters(
         tomData.email,
-        'invalid password'
+        'invalid password',
+        {doSendMail: false}
       )
       const res = await axios.post('user/login', param)
       assert.ok(res.status === 403, 'failed to reject the missing password...')
@@ -635,7 +640,8 @@ const tests = [
       // password check
       const passwordRes = await axios.post('user/login', {
         email: updateParam.email,
-        password: updateParam.password
+        password: updateParam.password,
+        doSendMail: false
       })
       assert.ok(passwordRes.status === 200, 'Failed to update user password...')
     }

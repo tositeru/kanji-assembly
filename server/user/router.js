@@ -122,7 +122,10 @@ router.post('/login', refusalAuthToken, async function(req, res) {
   try {
     const loginParam = new Datatype.LoginParameters(
       req.body.email,
-      req.body.password
+      req.body.password,
+      {
+        doSendMail: req.body.doSendMail || true
+      }
     )
     if (!loginParam.doValid) {
       logError(req, 'invalid paramaters')
@@ -139,10 +142,20 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       })
     }
 
+    if (loginParam.doSendMail) {
+      const htmlContent = MailSender.getLoginMailContent(token)
+      const sender = new MailSender(
+        '漢字組み立て工場　ログインしました',
+        htmlContent
+      )
+      sender.send(`${req.body.name} <${req.body.email}>`)
+    }
+
     logInfo(req, `email=${loginParam.email}`)
     return res.json({
       token: token
     })
+
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
@@ -276,11 +289,6 @@ router.post('/update', requireAuthToken, async function(req, res) {
   }
 })
 
-//* * 認証用メールのテンプレート*/
-const authMailTemplateFn = pug.compileFile(
-  path.resolve(__dirname, 'authMailTemplate.pug')
-)
-
 /**
  * ユーザー登録のAPI
  * req.bodyにはDatatype.SignupParametersに渡すことができるパラメータがあることを期待する
@@ -319,9 +327,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
 
     if (signupParam.doSendMail) {
       const token = tokenOrError
-      const htmlContent = authMailTemplateFn({
-        url: `https://localhost:3000/user/signup/${token}`
-      })
+      const htmlContent = MailSender.getAuthMailContent(token)
       const sender = new MailSender(
         '漢字組み立て工場　ユーザー確認',
         htmlContent
