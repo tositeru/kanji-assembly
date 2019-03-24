@@ -156,10 +156,7 @@ const tests = [
       const param = new UserDatatype.SignupParameters(
         userData.name,
         userData.email,
-        userData.password,
-        {
-          doSendMail: false // データベースを直接見るのでメールは送らない
-        }
+        userData.password
       )
       consola.log('request user/signup')
       const res = await axios.post('user/signup', param.toObj())
@@ -334,8 +331,7 @@ const tests = [
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
-      'tomtomtomtom',
-      { doSendMail: false }
+      'tomtomtomtom'
     )
     await createUser(tomData.name, tomData.email, tomData.password)
 
@@ -413,7 +409,7 @@ const tests = [
     test.pushDisposeObject(null, deleteAllUser)
     // POST /user/login with void parameters
     {
-      const res = await axios.post('user/login', {})
+      const res = await axios.post('user/login')
       assert.ok(res.status === 403, 'failed to reject the void parameter...')
     }
     // POST /user/login with unexsiting parameters
@@ -529,8 +525,7 @@ const tests = [
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
-      'tomtomtomtom',
-      { doSendMail: false }
+      'tomtomtomtom'
     )
     const tomToken = await createUser(
       tomData.name,
@@ -580,8 +575,7 @@ const tests = [
       const tomData = new UserDatatype.SignupParameters(
         'Tom',
         'tom@mail.com',
-        'tomtomtomtom',
-        { doSendMail: false }
+        'tomtomtomtom'
       )
       const tomToken = await createUser(
         tomData.name,
@@ -644,8 +638,7 @@ const tests = [
       const saraData = new UserDatatype.SignupParameters(
         'Sara',
         'Sara@mail.com',
-        'tomtomtomtom',
-        { doSendMail: false }
+        'tomtomtomtom'
       )
       const saraToken = await createUser(
         saraData.name,
@@ -775,8 +768,7 @@ const tests = [
         const otherData = new UserDatatype.SignupParameters(
           'Other',
           'other@mail.com',
-          'otherother',
-          { doSendMail: false }
+          'otherother'
         )
         await createUser(otherData.name, otherData.email, otherData.password)
 

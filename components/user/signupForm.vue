@@ -5,6 +5,7 @@
         v-card-title(class="success success--text text--lighten-4 display-1 text-xs-center") 仮登録完了
         v-card-text()
           | {{ this.successedMessage }}
+          nuxt-link(to="login") 認証メールのリンク先にアクセスしたあとにこちらからログインしてください。
     v-form(v-else v-model="signupInfo.valid")
       v-container(class="elevation-8")
         v-layout()

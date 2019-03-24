@@ -9,7 +9,7 @@ export const state = () => ({
 export const mutations = {
   setAuthToken(state, authToken) {
     if (typeof authToken !== 'string') {
-      consola.error('detect invalid auth token')
+      // consola.error('detect invalid auth token')
       state.auth = null
       return
     }
@@ -60,7 +60,7 @@ export const actions = {
       consola.error('Failed user login', error)
       return {
         isSuccessed: false,
-        messages: {
+        message: error.response.data.message || {
           network: 'ログインに失敗しました。'
         }
       }

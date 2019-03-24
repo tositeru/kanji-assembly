@@ -1,6 +1,4 @@
-const path = require('path')
 const express = require('express')
-const pug = require('pug')
 const log4js = require('log4js')
 const cookieparser = require('cookieparser')
 const utils = require('../utils.js')
@@ -131,12 +129,21 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       })
     }
 
-    const token = await User.login(loginParam)
-    if (!token) {
+    const result = await User.login(loginParam)
+    if (!result) {
       logError(req, 'failed to authentication')
       return res.status(403).json({
         message: '認証に失敗しました'
       })
+    }
+    const { user, token } = result
+    if (MailSender.enableMail()) {
+      const htmlContent = MailSender.getLoginMailContent(token)
+      const sender = new MailSender(
+        '漢字組み立て工場　ログインしました',
+        htmlContent
+      )
+      sender.send(`${user.name}さま <${user.email}>`)
     }
 
     logInfo(req, `email=${loginParam.email}`)
@@ -217,8 +224,7 @@ router.post('/update', requireAuthToken, async function(req, res) {
       user.name !== req.body.name ? req.body.name : null,
       user.email !== req.body.email ? req.body.email : null,
       req.body.password || null,
-      req.body.oldPassword,
-      req.body.doSendMail || true
+      req.body.oldPassword
     )
 
     if (!updateParam.doValid()) {
@@ -255,11 +261,21 @@ router.post('/update', requireAuthToken, async function(req, res) {
         messages: updateResultOrErrorMessages
       })
     }
+    const updatedUser = updateResultOrErrorMessages.user
+    const prevParam = updateResultOrErrorMessages.prevParam
     // 編集前のパラメータをどこかに保存しておく updateResult.prevParam
 
     // 更新したことを伝えるメールを送信する
-    if (process.NODE_ENV !== 'test' || updateParam.doSendMail) {
-      // TODO
+    if (MailSender.enableMail()) {
+      const htmlContent = MailSender.getUpdateMailContent()
+      const sender = new MailSender(
+        '漢字組み立て工場　ユーザー情報の更新',
+        htmlContent
+      )
+      sender.send(
+        `${updatedUser.name}さま <${updatedUser.email}>`,
+        prevParam.email
+      )
     }
 
     logInfo(req, 'OK')
@@ -276,11 +292,6 @@ router.post('/update', requireAuthToken, async function(req, res) {
   }
 })
 
-//* * 認証用メールのテンプレート*/
-const authMailTemplateFn = pug.compileFile(
-  path.resolve(__dirname, 'authMailTemplate.pug')
-)
-
 /**
  * ユーザー登録のAPI
  * req.bodyにはDatatype.SignupParametersに渡すことができるパラメータがあることを期待する
@@ -290,10 +301,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     const signupParam = new Datatype.SignupParameters(
       req.body.name,
       req.body.email,
-      req.body.password,
-      {
-        doSendMail: req.body.doSendMail
-      }
+      req.body.password
     )
     if (!signupParam.doValid()) {
       logError(req, 'invalid parameters')
@@ -317,16 +325,14 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
       })
     }
 
-    if (signupParam.doSendMail) {
+    if (MailSender.enableMail()) {
       const token = tokenOrError
-      const htmlContent = authMailTemplateFn({
-        url: `https://localhost:3000/user/signup/${token}`
-      })
+      const htmlContent = MailSender.getAuthMailContent(token)
       const sender = new MailSender(
         '漢字組み立て工場　ユーザー確認',
         htmlContent
       )
-      sender.send(`${req.body.name} <${req.body.email}>`)
+      sender.send(`${req.body.name}さま <${req.body.email}>`)
     }
 
     return res.json()

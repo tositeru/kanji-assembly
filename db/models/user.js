@@ -161,7 +161,10 @@ module.exports = (sequelize, DataTypes) => {
         `id=${user.id} name=${user.name} email=${user.email}`
       )
 
-      return token
+      return {
+        user: user,
+        token: token
+      }
     } catch (error) {
       logger.error('Login', `email=${loginParam.email}`, error)
       return null
@@ -308,6 +311,7 @@ module.exports = (sequelize, DataTypes) => {
         user.updatedAt
       )
       return {
+        user: user,
         newToken: newToken,
         prevParam: prevParam
       }
