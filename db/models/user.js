@@ -311,6 +311,7 @@ module.exports = (sequelize, DataTypes) => {
         user.updatedAt
       )
       return {
+        user: user,
         newToken: newToken,
         prevParam: prevParam
       }

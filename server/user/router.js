@@ -265,11 +265,21 @@ router.post('/update', requireAuthToken, async function(req, res) {
         messages: updateResultOrErrorMessages
       })
     }
+    const updatedUser = updateResultOrErrorMessages.user
+    const prevParam = updateResultOrErrorMessages.prevParam
     // 編集前のパラメータをどこかに保存しておく updateResult.prevParam
 
     // 更新したことを伝えるメールを送信する
     if (process.NODE_ENV !== 'test' || updateParam.doSendMail) {
-      // TODO
+      const htmlContent = MailSender.getUpdateMailContent()
+      const sender = new MailSender(
+        '漢字組み立て工場　ユーザー情報の更新',
+        htmlContent
+      )
+      sender.send(
+        `${updatedUser.name}さま <${updatedUser.email}>`,
+        prevParam.email
+      )
     }
 
     logInfo(req, 'OK')

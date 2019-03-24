@@ -18,6 +18,9 @@ const MAIL_TEMPLATE = {
   ),
   login: pug.compileFile(
     path.resolve(__dirname, 'templates/loginMailTemplate.pug')
+  ),
+  update: pug.compileFile(
+    path.resolve(__dirname, 'templates/updateMailTemplate.pug')
   )
 }
 
@@ -50,9 +53,10 @@ class MailSender {
 
   /**
    * 設定されている内容でメールを送信する
-   * @param {string} to
+   * @param {string|Array<string>} to
+   * @param {string|Array<string>|null} cc
    */
-  send(to) {
+  send(to, cc = null) {
     if (process.env.NODE_ENV === 'test') {
       sendWhenNoneSenderMailAccount(to) // for test
       return
@@ -74,6 +78,9 @@ class MailSender {
       subject: this._subject,
       text: this._text,
       html: this._html
+    }
+    if (cc) {
+      message.cc = cc
     }
 
     transporter.sendMail(message, (err, info, response) => {
@@ -105,6 +112,13 @@ class MailSender {
    */
   static getLoginMailContent() {
     return MAIL_TEMPLATE.login()
+  }
+
+  /**
+   * 更新時のメールの本文を取得する
+   */
+  static getUpdateMailContent() {
+    return MAIL_TEMPLATE.update()
   }
 }
 
