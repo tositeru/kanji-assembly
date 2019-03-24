@@ -1,12 +1,6 @@
 'use strict'
 
 /**
- * SignupParameters Options
- * @typedef {Object} SignupParametersOptions
- * @property {bool} doSendMail
- */
-
-/**
  * ユーザー登録時に使用するパラメータ
  * @class SignupParameters
  */
@@ -16,14 +10,11 @@ class SignupParameters {
    * @param {string} name
    * @param {string} email
    * @param {string} password
-   * @param {SignupParametersOptions|null} options
    */
-  constructor(name, email, password, options) {
+  constructor(name, email, password) {
     this._name = name
     this._email = email
     this._password = password
-    const opts = options || {}
-    this._doSendMail = opts.doSendMail || true
   }
 
   get name() {
@@ -35,9 +26,6 @@ class SignupParameters {
   get password() {
     return this._password
   }
-  get doSendMail() {
-    return this._doSendMail
-  }
 
   /**
    * JSON形式に変換する
@@ -46,8 +34,7 @@ class SignupParameters {
     return {
       name: this._name,
       email: this._email,
-      password: this._password,
-      doSendMail: this._doSendMail
+      password: this._password
     }
   }
 
@@ -68,12 +55,10 @@ class LoginParameters {
    * コンストラクタ
    * @param {string} email
    * @param {string} password
-   * @param {object} options
    */
-  constructor(email, password, options = {}) {
+  constructor(email, password) {
     this._email = email
     this._password = password
-    this._doSendMail = options.doSendMail || true
   }
 
   get email() {
@@ -82,9 +67,6 @@ class LoginParameters {
   get password() {
     return this._password
   }
-  get doSendMail() {
-    return this._doSendMail
-  }
 
   /**
    * JSON形式に変換する
@@ -92,8 +74,7 @@ class LoginParameters {
   toObj() {
     return {
       email: this._email,
-      password: this._password,
-      doSendMail: this._doSendMail
+      password: this._password
     }
   }
 
@@ -115,14 +96,12 @@ class UpdateParameters {
    * @param {string} email
    * @param {string} password
    * @param {string} oldPassword
-   * @param {boolean} doSendMail
    */
-  constructor(name, email, password, oldPassword, doSendMail = true) {
+  constructor(name, email, password, oldPassword) {
     this.name = name
     this.email = email
     this.password = password
     this.oldPassword = oldPassword
-    this.doSendMail = doSendMail
   }
 
   /**
@@ -133,8 +112,7 @@ class UpdateParameters {
       name: this.name,
       email: this.email,
       password: this.password,
-      oldPassword: this.oldPassword,
-      doSendMail: this.doSendMail
+      oldPassword: this.oldPassword
     }
   }
 

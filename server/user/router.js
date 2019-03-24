@@ -120,10 +120,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
   try {
     const loginParam = new Datatype.LoginParameters(
       req.body.email,
-      req.body.password,
-      {
-        doSendMail: req.body.doSendMail || true
-      }
+      req.body.password
     )
     if (!loginParam.doValid) {
       logError(req, 'invalid paramaters')
@@ -140,7 +137,7 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       })
     }
     const { user, token } = result
-    if (loginParam.doSendMail) {
+    if (MailSender.enableMail()) {
       const htmlContent = MailSender.getLoginMailContent(token)
       const sender = new MailSender(
         '漢字組み立て工場　ログインしました',
@@ -227,8 +224,7 @@ router.post('/update', requireAuthToken, async function(req, res) {
       user.name !== req.body.name ? req.body.name : null,
       user.email !== req.body.email ? req.body.email : null,
       req.body.password || null,
-      req.body.oldPassword,
-      req.body.doSendMail || true
+      req.body.oldPassword
     )
 
     if (!updateParam.doValid()) {
@@ -270,7 +266,7 @@ router.post('/update', requireAuthToken, async function(req, res) {
     // 編集前のパラメータをどこかに保存しておく updateResult.prevParam
 
     // 更新したことを伝えるメールを送信する
-    if (process.NODE_ENV !== 'test' || updateParam.doSendMail) {
+    if (MailSender.enableMail()) {
       const htmlContent = MailSender.getUpdateMailContent()
       const sender = new MailSender(
         '漢字組み立て工場　ユーザー情報の更新',
@@ -305,10 +301,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     const signupParam = new Datatype.SignupParameters(
       req.body.name,
       req.body.email,
-      req.body.password,
-      {
-        doSendMail: req.body.doSendMail
-      }
+      req.body.password
     )
     if (!signupParam.doValid()) {
       logError(req, 'invalid parameters')
@@ -332,7 +325,7 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
       })
     }
 
-    if (signupParam.doSendMail) {
+    if (MailSender.enableMail()) {
       const token = tokenOrError
       const htmlContent = MailSender.getAuthMailContent(token)
       const sender = new MailSender(

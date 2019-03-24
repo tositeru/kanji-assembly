@@ -96,9 +96,7 @@ async function createUser(name, email, password) {
     }
   })
 
-  const loginParam = new UserDatatype.LoginParameters(email, password, {
-    doSendMail: false
-  })
+  const loginParam = new UserDatatype.LoginParameters(email, password)
   const loginResposnse = await axios.post('user/login', loginParam.toObj())
   return loginResposnse.data.token
 }
@@ -158,10 +156,7 @@ const tests = [
       const param = new UserDatatype.SignupParameters(
         userData.name,
         userData.email,
-        userData.password,
-        {
-          doSendMail: false // データベースを直接見るのでメールは送らない
-        }
+        userData.password
       )
       consola.log('request user/signup')
       const res = await axios.post('user/signup', param.toObj())
@@ -199,8 +194,7 @@ const tests = [
       consola.log('request user/login')
       const loginParam = new UserDatatype.LoginParameters(
         userData.email,
-        userData.password,
-        { doSendMail: false }
+        userData.password
       )
       const loginResposnse = await axios.post('user/login', loginParam.toObj())
       assert.ok(
@@ -226,8 +220,7 @@ const tests = [
     {
       const loginParam = new UserDatatype.LoginParameters(
         userData.email,
-        userData.password,
-        { doSendMail: false }
+        userData.password
       )
       const loginResposnse = await axios.post('user/login', loginParam.toObj())
       assert.ok(loginResposnse.status === 200, 'Falied to login...')
@@ -338,8 +331,7 @@ const tests = [
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
-      'tomtomtomtom',
-      { doSendMail: false }
+      'tomtomtomtom'
     )
     await createUser(tomData.name, tomData.email, tomData.password)
 
@@ -417,15 +409,14 @@ const tests = [
     test.pushDisposeObject(null, deleteAllUser)
     // POST /user/login with void parameters
     {
-      const res = await axios.post('user/login', { doSendMail: false })
+      const res = await axios.post('user/login')
       assert.ok(res.status === 403, 'failed to reject the void parameter...')
     }
     // POST /user/login with unexsiting parameters
     {
       const param = new UserDatatype.LoginParameters(
         'hgohgpr@jgvoi.com',
-        'aaaaaaaaaaaaaaa',
-        { doSendMail: false }
+        'aaaaaaaaaaaaaaa'
       )
       const res = await axios.post('user/login', param)
       assert.ok(
@@ -448,8 +439,7 @@ const tests = [
     {
       const param = new UserDatatype.LoginParameters(
         tomData.email,
-        tomData.password,
-        { doSendMail: false }
+        tomData.password
       )
       const res = await axios.post('user/login', param.toObj())
       assert.ok(res.status === 200, 'failed to login for already login user...')
@@ -462,8 +452,7 @@ const tests = [
     {
       const param = new UserDatatype.LoginParameters(
         tomData.email,
-        'invalid password',
-        { doSendMail: false }
+        'invalid password'
       )
       const res = await axios.post('user/login', param)
       assert.ok(res.status === 403, 'failed to reject the missing password...')
@@ -536,8 +525,7 @@ const tests = [
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
-      'tomtomtomtom',
-      { doSendMail: false }
+      'tomtomtomtom'
     )
     const tomToken = await createUser(
       tomData.name,
@@ -587,8 +575,7 @@ const tests = [
       const tomData = new UserDatatype.SignupParameters(
         'Tom',
         'tom@mail.com',
-        'tomtomtomtom',
-        { doSendMail: false }
+        'tomtomtomtom'
       )
       const tomToken = await createUser(
         tomData.name,
@@ -642,8 +629,7 @@ const tests = [
       // password check
       const passwordRes = await axios.post('user/login', {
         email: updateParam.email,
-        password: updateParam.password,
-        doSendMail: false
+        password: updateParam.password
       })
       assert.ok(passwordRes.status === 200, 'Failed to update user password...')
     }
@@ -652,8 +638,7 @@ const tests = [
       const saraData = new UserDatatype.SignupParameters(
         'Sara',
         'Sara@mail.com',
-        'tomtomtomtom',
-        { doSendMail: false }
+        'tomtomtomtom'
       )
       const saraToken = await createUser(
         saraData.name,
@@ -783,8 +768,7 @@ const tests = [
         const otherData = new UserDatatype.SignupParameters(
           'Other',
           'other@mail.com',
-          'otherother',
-          { doSendMail: false }
+          'otherother'
         )
         await createUser(otherData.name, otherData.email, otherData.password)
 
