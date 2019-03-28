@@ -62,7 +62,7 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     await resetPassword.destroy()
-    logger.error('isValidToken', `token=${token},email=${resetPassword.email}`)
+    logger.info('isValidToken', `token=${token},email=${resetPassword.email}`)
     return resetPassword.email
   }
 
