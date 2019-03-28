@@ -9,7 +9,7 @@ const consola = require('consola')
 const shell = require('shelljs')
 const sleep = require('sleep')
 const UserDatatype = require('../server/user/defineDatatypes')
-const { User, UserTmp } = require('../db/database')
+const { User, UserTmp, ResetPasswordUser } = require('../db/database')
 const Utils = require('./utils')
 
 axios.defaults.baseURL = 'http://localhost:3003'
@@ -851,6 +851,128 @@ const tests = [
           }`
         )
       }
+    }
+  }),
+  new Utils.Test('Test reset password', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+    const userData = UserDatatype.SignupParameters(
+      'Tom',
+      'tom@mail.com',
+      'tomtomtom'
+    )
+    const token = await createUser(
+      userData.name,
+      userData.email,
+      userData.password
+    )
+    // success
+    {
+      const res = axios.post('/user/request-reset-password', {
+        email: userData.email
+      })
+      assert.ok(
+        res.status === 200,
+        `/user/request-reset-password: Invalid status ${res.status}`
+      )
+
+      const requestUser = await ResetPasswordUser.findOne({
+        where: {
+          email: userData.email,
+        }
+      })
+
+      const newPasswrod = 'tomtomtomtom'
+      const urlToken = requestUser.token
+      const resetPasswordRes = await axios.post('/user/reset-password', {
+        token: urlToken,
+        password: newPasswrod
+      })
+      assert.ok(
+        resetPasswordRes.status === 200,
+        `/user/reset-password : Invalid status ${resetPasswordRes.status}`
+      )
+
+      // 確認
+      const loginParam = new UserDatatype.LoginParameters(
+        userData.email,
+        newPasswrod
+      )
+      const loginRes = await axios.post('/user/login', loginParam.toObj)
+      assert.ok(
+        loginRes.status,
+        `Check /user/login: Invalid status ${loginRes.status}`
+      )
+      assert.ok(
+        loginRes.data.token !== token,
+        `Check /user/login: Not change Auth Token...`
+      )
+    }
+
+    // /user/request-reset-password invalid email
+    {
+      const res = await axios.post('/user/request-reset-password', {
+        email: 'invalid email'
+      })
+      assert.ok(
+        res.status === 400,
+        `/user/request-reset-password Invalid email : Invalid status ${
+          res.status
+        }`
+      )
+    }
+    // /user/reset-password invalid token
+    {
+      const res = await axios.post('/user/reset-password', {
+        token: 'invalid token',
+        email: userData.email
+      })
+      assert.ok(
+        res.status === 400,
+        `/user/reset-password Invalid token : Invalid status ${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `/user/reset-password Invalid token : Do not exsit message ${JSON.stringly(
+          res.data
+        )}`
+      )
+    }
+    // /user/reset-password invalid email
+    {
+      // 前準備
+      const requestResetPasswordRes = axios.post(
+        '/user/request-reset-password',
+        {
+          email: userData.email
+        }
+      )
+      assert.ok(
+        requestResetPasswordRes.status === 200,
+        `/user/request-reset-password: Invalid status ${
+          requestResetPasswordRes.status
+        }`
+      )
+      const requestUser = await ResetPasswordUser.findOne({
+        where: {
+          email: userData.email,
+        }
+      })
+
+      // テスト内容
+      const res = await axios.post('/user/reset-password', {
+        token: requestUser.token,
+        email: 'invalid email'
+      })
+      assert.ok(
+        res.status === 400,
+        `/user/reset-password Invalid email : Invalid status ${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `/user/reset-password Invalid email : Do not exsit message ${JSON.stringly(
+          res.data
+        )}`
+      )
     }
   })
 ]
