@@ -233,10 +233,11 @@ const tests = [
       consola.log('request user/delete')
       const deleteResposnse = await axios.delete('user/delete', {
         data: {
-          token: loginResposnse.data.token
+          password: userData.password
         },
         headers: {
-          'Content-Length': loginResposnse.data.token.length
+          'x-access-token': loginResposnse.data.token,
+          'Content-Length': userData.password
         }
       })
       assert.ok(
@@ -501,6 +502,7 @@ const tests = [
     // POST /user/delete without auth token
     const res = await axios.delete('user/delete')
     assert.ok(res.status === 401, 'failed to delete without auth token...')
+    test.pushDisposeObject(null, deleteAllUser)
 
     // POST /user/delete without invalid auth token
     // POST /user/delete without auth token
@@ -510,15 +512,70 @@ const tests = [
         '2000-01-02 12:30:30',
         '2001-02-03 13:32:32'
       )
+      const password = 'sojhp'
       const res = await axios.delete('user/delete', {
         data: {
-          token: invalidAuthToken
+          password: password
         },
         headers: {
-          'Content-Length': invalidAuthToken.length
+          'x-access-token': invalidAuthToken,
+          'Content-Length': password.length
         }
       })
-      assert.ok(res.status === 403, 'failed to delete without auth token...')
+      assert.ok(
+        res.status === 403,
+        `Case Invalid Auth Token: invalid status... status=${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `Case Invalid Auth Token: Do not have error message... status=${JSON.stringify(
+          res.data
+        )}`
+      )
+      assert.ok(
+        res.data.isSuccessed === false,
+        `Case Invalid Auth Token: Invalid isSuccessed... status=${JSON.stringify(
+          res.data
+        )}`
+      )
+    }
+    {
+      const userData = new UserDatatype.SignupParameters(
+        'Tom',
+        'tom@mail.com',
+        'tomtomtom'
+      )
+      const token = await createUser(
+        userData.name,
+        userData.email,
+        userData.password
+      )
+      const invalidPassword = 'invalidpassword'
+      const res = await axios.delete('user/delete', {
+        data: {
+          password: 'invalid password'
+        },
+        headers: {
+          'x-access-token': token,
+          'Content-Length': invalidPassword.length
+        }
+      })
+      assert.ok(
+        res.status === 403,
+        `Case Invalid Password: invalid status... status=${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `Case Invalid Password: Do not have error message... status=${JSON.stringify(
+          res.data
+        )}`
+      )
+      assert.ok(
+        res.data.isSuccessed === false,
+        `Case Invalid Password: Invalid isSuccessed... status=${JSON.stringify(
+          res.data
+        )}`
+      )
     }
   }),
   new Utils.Test('Test GET /user/get', async test => {

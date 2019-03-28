@@ -199,7 +199,13 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  User.delete = async userAuth => {
+  User.delete = async (userAuth, password) => {
+    const result = {
+      isSuccessed: false,
+      user: null,
+      message: ''
+    }
+
     try {
       const user = await User.findOne({
         where: {
@@ -208,10 +214,23 @@ module.exports = (sequelize, DataTypes) => {
           updatedAt: userAuth.updatedAt
         }
       })
+
       if (!user) {
         logger.error('Delete', `user id=${userAuth.id} `, 'not find user')
-        return false
+        result.message = '無効な操作です'
+        return result
       }
+
+      const encryptPassword = CommonCrypt.encryptPassword(
+        password,
+        user.password2
+      )
+      if (encryptPassword.hashedPassword !== user.password) {
+        logger.error('Delete', `user id=${userAuth.id} `, 'invalid password')
+        result.message = 'パスワードが異なります。'
+        return result
+      }
+
       user.setDataValue('status', User.STATUS_LOCKED)
       await user.destroy()
 
@@ -220,16 +239,13 @@ module.exports = (sequelize, DataTypes) => {
         `id=${user.id} name=${user.name} email=${user.email}`
       )
 
-      return {
-        isSuccessed: true,
-        user: user
-      }
+      result.isSuccessed = true
+      result.user = user
+      return result
     } catch (error) {
       logger.error('Delete', `user id=${userAuth.id}`, error)
-      return {
-        isSuccessed: false,
-        user: null
-      }
+      result.message = '無効な操作です'
+      return result
     }
   }
 
