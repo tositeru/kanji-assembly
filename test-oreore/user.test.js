@@ -877,7 +877,7 @@ const tests = [
 
       const requestUser = await ResetPasswordUser.findOne({
         where: {
-          email: userData.email,
+          email: userData.email
         }
       })
 
@@ -954,7 +954,7 @@ const tests = [
       )
       const requestUser = await ResetPasswordUser.findOne({
         where: {
-          email: userData.email,
+          email: userData.email
         }
       })
 
