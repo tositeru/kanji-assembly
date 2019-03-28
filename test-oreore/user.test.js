@@ -184,7 +184,9 @@ const tests = [
       })
       assert.ok(
         signupResponse.status === 200,
-        'invalid response parameter at signup/:token'
+        `invalid response parameter at signup/:token... status=${
+          signupResponse.status
+        }`
       )
     }
 

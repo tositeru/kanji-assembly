@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
     try {
       const count = await User.count({
         where: {
-          [sequelize.Op.or]: [{ name: name || '' }, { email: email || '' }]
+          $or: [{ name: name || '' }, { email: email || '' }]
         }
       })
       return count > 0

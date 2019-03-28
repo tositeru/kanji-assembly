@@ -1,12 +1,19 @@
 const Sequelize = require('sequelize')
+const consola = require('consola')
 const config = require('./config.js')
+
+const usedOperatorsAliases = {
+  $or: Sequelize.Op.or,
+  $gte: Sequelize.Op.gte,
+  $between: Sequelize.Op.between
+}
 
 const sequelize = new Sequelize(
   Object.assign(config.get(), {
     logging: function(msg) {
-      this.consola.log('DATABASE QUERY: ', msg)
+      consola.log('DATABASE QUERY: ', msg)
     },
-    operatorsAliases: false
+    operatorsAliases: usedOperatorsAliases
   })
 )
 

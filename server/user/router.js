@@ -179,7 +179,7 @@ router.post('/logout', requireAuthToken, async function(req, res) {
 
 router.delete('/delete', requireAuthToken, async function(req, res) {
   try {
-    const isSuccessed = await User.delete(req.userAuth)
+    const {isSuccessed, user} = await User.delete(req.userAuth)
     if (!isSuccessed) {
       logError(req, 'failed to delete user')
       return res.status(403).json({
@@ -187,7 +187,16 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
       })
     }
 
-    return res.json()
+    if (MailSender.enableMail()) {
+      const htmlContent = MailSender.getDeleteMailContent()
+      const sender = new MailSender(
+        '漢字組み立て工場　ユーザー情報の削除',
+        htmlContent
+      )
+      sender.send(`${user.name}さま <${user.email}>`)
+    }
+
+    return res.status(200).json({})
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
