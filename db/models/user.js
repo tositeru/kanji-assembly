@@ -220,10 +220,16 @@ module.exports = (sequelize, DataTypes) => {
         `id=${user.id} name=${user.name} email=${user.email}`
       )
 
-      return true
+      return {
+        isSuccessed: true,
+        user: user
+      }
     } catch (error) {
       logger.error('Delete', `user id=${userAuth.id}`, error)
-      return false
+      return {
+        isSuccessed: false,
+        user: null
+      }
     }
   }
 

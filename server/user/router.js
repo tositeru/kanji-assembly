@@ -179,7 +179,7 @@ router.post('/logout', requireAuthToken, async function(req, res) {
 
 router.delete('/delete', requireAuthToken, async function(req, res) {
   try {
-    const {isSuccessed, user} = await User.delete(req.userAuth)
+    const { isSuccessed, user } = await User.delete(req.userAuth)
     if (!isSuccessed) {
       logError(req, 'failed to delete user')
       return res.status(403).json({
