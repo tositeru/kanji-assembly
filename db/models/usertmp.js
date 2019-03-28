@@ -25,9 +25,9 @@ module.exports = (sequelize, DataTypes) => {
     const expirationDate = expirationTime()
     const count = await UserTmp.count({
       where: {
-        [sequelize.Op.or]: [{ name: name }, { email: email }],
+        $or: [{ name: name }, { email: email }],
         updatedAt: {
-          [sequelize.Op.gte]: expirationDate.toISOString()
+          $gte: expirationDate.toISOString()
         }
       }
     })
@@ -93,7 +93,7 @@ module.exports = (sequelize, DataTypes) => {
       where: {
         token: token,
         updatedAt: {
-          [sequelize.Op.gte]: expirationDate.toISOString()
+          $gte: expirationDate.toISOString()
         }
       }
     })

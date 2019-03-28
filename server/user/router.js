@@ -179,18 +179,35 @@ router.post('/logout', requireAuthToken, async function(req, res) {
 
 router.delete('/delete', requireAuthToken, async function(req, res) {
   try {
-    const isSuccessed = await User.delete(req.userAuth)
+    const { isSuccessed, user, message } = await User.delete(
+      req.userAuth,
+      req.body.password
+    )
     if (!isSuccessed) {
       logError(req, 'failed to delete user')
       return res.status(403).json({
-        message: 'ユーザーの削除に失敗しました'
+        isSuccessed: false,
+        message: message
       })
     }
 
-    return res.json()
+    if (MailSender.enableMail()) {
+      const htmlContent = MailSender.getDeleteMailContent()
+      const sender = new MailSender(
+        '漢字組み立て工場　ユーザー情報の削除',
+        htmlContent
+      )
+      sender.send(`${user.name}さま <${user.email}>`)
+    }
+
+    logInfo(req, 'OK')
+    return res.status(200).json({
+      isSuccessed: true
+    })
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
+      isSuccessed: false,
       message: 'サーバー側の不具合によりユーザーの削除に失敗しました'
     })
   }
@@ -199,8 +216,10 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
 router.get('/get', requireAuthToken, async function(req, res) {
   try {
     const user = await User.getByAuthToken(req.userAuth)
-    if (!user) {
-      return res.status(403)
+    if (user.error) {
+      return res.status(403).send({
+        notFoundUser: user.error === 2
+      })
     }
 
     logInfo(req, `OK`)

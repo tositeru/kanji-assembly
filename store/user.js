@@ -106,7 +106,17 @@ export const actions = {
       return res.data
     } catch (error) {
       consola.error('Failed to get user parameters', error)
-      return null
+
+      const resdata = error.response.data
+      if (resdata.notFoundUser) {
+        // ユーザーデータがない認証トークンだったときは認証トークンをクリアーし、ログイン画面へリダイレクトする
+        commit('setAuthToken', null)
+        Cookie.set('auth', null)
+      }
+      return {
+        error: true,
+        invalidAuthToken: resdata.notFoundUser
+      }
     }
   },
   async update({ state, commit }, { name, email, password, oldPassword }) {
@@ -131,6 +141,32 @@ export const actions = {
       return {
         isSuccessed: false,
         errors: error.response.data.messages
+      }
+    }
+  },
+  async delete({ state, commit }, password) {
+    try {
+      const res = await axios.delete('user/delete', {
+        data: {
+          password: password
+        },
+        headers: {
+          'x-access-token': state.auth,
+          'Content-Length': password.length
+        }
+      })
+      if (res.data.isSuccessed) {
+        commit('setAuthToken', null)
+        Cookie.set('auth', null)
+      }
+
+      return {
+        isSuccessed: res.data.isSuccessed
+      }
+    } catch (error) {
+      return {
+        isSuccessed: false,
+        message: error.response.data.message
       }
     }
   }
