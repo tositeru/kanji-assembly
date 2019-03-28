@@ -21,6 +21,9 @@ const MAIL_TEMPLATE = {
   ),
   update: pug.compileFile(
     path.resolve(__dirname, 'templates/updateMailTemplate.pug')
+  ),
+  delete: pug.compileFile(
+    path.resolve(__dirname, 'templates/deleteMailTemplate.pug')
   )
 }
 
@@ -128,6 +131,13 @@ class MailSender {
    */
   static getUpdateMailContent() {
     return MAIL_TEMPLATE.update()
+  }
+
+  /**
+   * 削除時のメールの本文を取得する
+   */
+  static getDeleteMailContent() {
+    return MAIL_TEMPLATE.delete()
   }
 
   /**
