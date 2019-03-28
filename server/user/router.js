@@ -200,6 +200,7 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
       sender.send(`${user.name}さま <${user.email}>`)
     }
 
+    logInfo(req, 'OK')
     return res.status(200).json({
       isSuccessed: true
     })

@@ -143,5 +143,31 @@ export const actions = {
         errors: error.response.data.messages
       }
     }
+  },
+  async delete({ state, commit }, password) {
+    try {
+      const res = await axios.delete('user/delete', {
+        data: {
+          password: password
+        },
+        headers: {
+          'x-access-token': state.auth,
+          'Content-Length': password.length
+        }
+      })
+      if (res.data.isSuccessed) {
+        commit('setAuthToken', null)
+        Cookie.set('auth', null)
+      }
+
+      return {
+        isSuccessed: res.data.isSuccessed
+      }
+    } catch (error) {
+      return {
+        isSuccessed: false,
+        message: error.response.data.message
+      }
+    }
   }
 }
