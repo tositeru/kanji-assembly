@@ -106,7 +106,17 @@ export const actions = {
       return res.data
     } catch (error) {
       consola.error('Failed to get user parameters', error)
-      return null
+
+      const resdata = error.response.data
+      if (resdata.notFoundUser) {
+        // ユーザーデータがない認証トークンだったときは認証トークンをクリアーし、ログイン画面へリダイレクトする
+        commit('setAuthToken', null)
+        Cookie.set('auth', null)
+      }
+      return {
+        error: true,
+        invalidAuthToken: resdata.notFoundUser
+      }
     }
   },
   async update({ state, commit }, { name, email, password, oldPassword }) {

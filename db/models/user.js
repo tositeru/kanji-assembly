@@ -243,12 +243,21 @@ module.exports = (sequelize, DataTypes) => {
         }
       })
       if (!user) {
-        throw new Error('Not found user...')
+        logger.error(
+          'GetByID',
+          `token=${JSON.stringify(authToken)}`,
+          'do not found user...'
+        )
+        return {
+          error: 2
+        }
       }
       return user
     } catch (error) {
       logger.error('GetByID', `token=${JSON.stringify(authToken)}`, error)
-      return null
+      return {
+        error: 1
+      }
     }
   }
 

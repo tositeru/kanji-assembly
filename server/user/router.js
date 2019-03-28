@@ -208,8 +208,10 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
 router.get('/get', requireAuthToken, async function(req, res) {
   try {
     const user = await User.getByAuthToken(req.userAuth)
-    if (!user) {
-      return res.status(403)
+    if (user.error) {
+      return res.status(403).send({
+        notFoundUser: user.error === 2
+      })
     }
 
     logInfo(req, `OK`)

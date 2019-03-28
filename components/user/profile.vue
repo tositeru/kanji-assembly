@@ -63,6 +63,14 @@ export default {
   },
   async mounted() {
     const userParameter = await this.$store.dispatch('user/get')
+    if (userParameter.error) {
+      if (userParameter.invalidAuthToken) {
+        // もし、不正な認証トークンならログインページに飛ばす
+        this.$router.replace('/login')
+        return
+      }
+    }
+
     if (userParameter) {
       this.user.name = userParameter.name
       this.user.email = userParameter.email
@@ -70,6 +78,7 @@ export default {
       this.updateInfo.name = this.user.name
       this.updateInfo.email = this.user.email
     }
+
     this.updateInfo.setOldPassword('')
     this.loading = false
   },
