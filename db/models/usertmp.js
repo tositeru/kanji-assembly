@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   /**
-   * 同じパラメータがないか数えす
+   * 同じパラメータがないか返す
    * @param {string} name
    * @param {string} email
    */
@@ -106,8 +106,9 @@ module.exports = (sequelize, DataTypes) => {
       password: usertmp.password,
       password2: usertmp.password2
     }
-    usertmp.destroy()
-    logger.error(
+    await usertmp.destroy()
+
+    logger.info(
       'isValidToken',
       `token=${token},name=${result.name},email=${result.email}`
     )

@@ -372,5 +372,31 @@ module.exports = (sequelize, DataTypes) => {
     return userData
   }
 
+  User.resetPassword = async (email, password) => {
+    try {
+      const user = await User.findOne({
+        where: {
+          email: email,
+          deletedAt: null
+        }
+      })
+      if (!user) {
+        logger.error('ResetPassword', `email=${email}`, 'Not found user...')
+        return false
+      }
+
+      const encryptPassword = CommonCrypt.encryptPassword(password)
+      user.setDataValue('password', encryptPassword.hashedPassword)
+      user.setDataValue('password2', encryptPassword.salt)
+      await user.save()
+
+      logger.info('ResetPassword', `id=${user.id} email=${email}`)
+      return user
+    } catch (error) {
+      logger.error('ResetPassword', `email=${email}`, error)
+      return null
+    }
+  }
+
   return User
 }

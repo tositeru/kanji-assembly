@@ -3,7 +3,7 @@ const log4js = require('log4js')
 const cookieparser = require('cookieparser')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
-const { User, UserTmp } = require('../../db/database')
+const { User, UserTmp, ResetPasswordUsers } = require('../../db/database')
 const Logger = require('../../src/log')
 const Datatype = require('./defineDatatypes')
 
@@ -404,6 +404,90 @@ router.get('/check', async function(req, res) {
       email: emailCount > 0
     }
   })
+})
+
+router.post('/request-reset-password', async function(req, res) {
+  const email = req.body.email
+  try {
+    const user = await User.findOne({
+      where: {
+        email: email
+      }
+    })
+    if (!user) {
+      logError(req, `email=${email} Not exsit user...`)
+      return res.status(400).json({
+        message: 'パスワード再設定要求に失敗しました'
+      })
+    }
+    const token = await ResetPasswordUsers.add(email)
+    if (!token) {
+      logError(req, `email=${email} failed to add column...`)
+      return res.status(400).json({
+        message: 'パスワード再設定要求に失敗しました'
+      })
+    }
+    if (MailSender.enableMail()) {
+      const contents = MailSender.getResetPasswordContent(token)
+      const sender = new MailSender(
+        '漢字組み立て工場 パスワード再設定',
+        contents
+      )
+      sender.send(email)
+    }
+
+    logInfo(req, `email=${email}`)
+    return res.json({})
+  } catch (error) {
+    logError(req, `email=${email} ${error}`)
+    return res.status(500).json({
+      message: 'サーバー側の不具合により情報の取得に失敗しました'
+    })
+  }
+})
+
+router.post('/reset-password', async function(req, res) {
+  const token = req.body.token
+  const password = req.body.password
+
+  try {
+    if (!token || !password) {
+      logError(req, `token=${token},password=${password}`)
+      return res.status(404).json({
+        isSuccessed: false,
+        message: '不正なパラメータです'
+      })
+    }
+
+    const email = await ResetPasswordUsers.isValidToken(token)
+    if (!email) {
+      logError(req, `token=${token}`)
+      return res.status(400).json({
+        isSuccessed: false,
+        message: '不正なアクセスです'
+      })
+    }
+
+    const user = await User.resetPassword(email, password)
+    if (!user) {
+      logError(req, `token=${token}`)
+      return res.status(400).json({
+        isSuccessed: false,
+        message: '不正なアクセスです'
+      })
+    }
+
+    logInfo(req, `Reset password user email=${user.email}`)
+    return res.json({
+      isSuccessed: true
+    })
+  } catch (error) {
+    logError(req, `token=${token} ${error}`)
+    return res.status(500).json({
+      isSuccessed: false,
+      message: 'サーバー側の不具合により処理に失敗しました'
+    })
+  }
 })
 
 module.exports = {
