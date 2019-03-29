@@ -427,9 +427,8 @@ router.post('/request-reset-password', async function(req, res) {
         message: 'パスワード再設定要求に失敗しました'
       })
     }
-
     if (MailSender.enableMail()) {
-      const contents = MailSender.getResetpasswordContent(token)
+      const contents = MailSender.getResetPasswordContent(token)
       const sender = new MailSender(
         '漢字組み立て工場 パスワード再設定',
         contents

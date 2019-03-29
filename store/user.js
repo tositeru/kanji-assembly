@@ -95,7 +95,9 @@ export const actions = {
   },
   async get({ state, commit }) {
     if (!state.auth) {
-      return
+      return {
+        error: true
+      }
     }
     try {
       const res = await axios.get('/user/get', {
@@ -168,6 +170,50 @@ export const actions = {
         isSuccessed: false,
         message: error.response.data.message
       }
+    }
+  },
+  async requestResetPassword({ state }, email) {
+    const result = {
+      isSuccessed: false,
+      message: null
+    }
+    if (state.auth) {
+      result.message =
+        'ログインしている状態ではパスワードの再設定メールを送信できません'
+      return result
+    }
+    try {
+      await axios.post('/user/request-reset-password', {
+        email: email
+      })
+
+      result.isSuccessed = true
+      return result
+    } catch (error) {
+      result.message = error.response.data.message
+      return result
+    }
+  },
+  async resetPassword({ state }, { token, password }) {
+    const result = {
+      isSuccessed: false,
+      message: null
+    }
+    if (state.auth) {
+      result.message = 'ログインしている状態ではパスワードの再設定はできません'
+      return result
+    }
+    try {
+      await axios.post('/user/reset-password', {
+        token: token,
+        password: password
+      })
+
+      result.isSuccessed = true
+      return result
+    } catch (error) {
+      result.message = error.response.data.message
+      return result
     }
   }
 }

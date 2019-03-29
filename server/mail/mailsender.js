@@ -10,6 +10,14 @@ const logger = new Logger('Send Mail')
 const baseURL = 'https://localhost:3000'
 
 /**
+ * URLを作成する
+ * @param {string} router
+ */
+function makeUrl(router) {
+  return path.join(baseURL, router)
+}
+
+/**
  * 各メールのテンプレート
  */
 const MAIL_TEMPLATE = {
@@ -24,6 +32,9 @@ const MAIL_TEMPLATE = {
   ),
   delete: pug.compileFile(
     path.resolve(__dirname, 'templates/deleteMailTemplate.pug')
+  ),
+  resetPassword: pug.compileFile(
+    path.resolve(__dirname, 'templates/resetPasswordMailTemplate.pug')
   )
 }
 
@@ -115,7 +126,7 @@ class MailSender {
    */
   static getAuthMailContent(token) {
     return MAIL_TEMPLATE.auth({
-      url: `${baseURL}/user/signup/${token}`
+      url: makeUrl(`user/signup/${token}`)
     })
   }
 
@@ -140,6 +151,15 @@ class MailSender {
     return MAIL_TEMPLATE.delete()
   }
 
+  /**
+   * 認証用のメールの本文を取得する
+   * @param {string} token 認証用の一時URLのトークン
+   */
+  static getResetPasswordContent(token) {
+    return MAIL_TEMPLATE.resetPassword({
+      url: makeUrl(`user/reset-password/${token}`)
+    })
+  }
   /**
    * 送信用メールアカウントがないときに使う関数
    */

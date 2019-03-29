@@ -919,6 +919,12 @@ const tests = [
           res.status
         }`
       )
+      assert.ok(
+        res.data.message,
+        `/user/request-reset-password Invalid token : Do not exsit message ${JSON.stringify(
+          res.data
+        )}`
+      )
     }
     // /user/reset-password invalid token
     {
