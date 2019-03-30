@@ -31,13 +31,21 @@
           v-flex(v-if="errorMessage.caption")
             div(class="error error--text text--lighten-4 display-1 text-xs-center") {{ errorMessage.caption }}
           v-flex(class="text-xs-right")
-            v-btn(@click="send") 登録
+            v-btn(@click="doShowPrivacyPolicy = !doShowPrivacyPolicy") 登録
+        v-dialog(v-model="doShowPrivacyPolicy" persistent max-width="50%")
+          v-card
+            div(class="text-xs-center display-1") ご登録の前に
+          privacy-policy()
+          v-card
+            div(class="text-xs-right")
+              v-btn(@click="send") 同意して登録
 </template>
 
 <script>
 import validator from 'validator'
 import consola from 'consola'
 import axios from 'axios'
+import PrivacyPolicy from '~/components/about/privacyPolicy.vue'
 
 const SUCCESSED_MESSAGE =
   'ユーザー登録に成功しました。' +
@@ -45,6 +53,9 @@ const SUCCESSED_MESSAGE =
 
 const MIN_PASSWORD_LENGTH = 8
 export default {
+  components: {
+    'privacy-policy': PrivacyPolicy
+  },
   data: function() {
     return {
       isSuccessed: false,
@@ -71,7 +82,8 @@ export default {
         usableName: v =>
           this.isUsableName || '同じ名前のユーザーが存在しています'
       },
-      errorMessage: {}
+      errorMessage: {},
+      doShowPrivacyPolicy: false
     }
   },
   computed: {
@@ -100,6 +112,7 @@ export default {
       } catch (err) {
         consola.error('signup error', err)
       }
+      this.doShowPrivacyPolicy = false
     },
     async changeName() {
       this.doCheckingName = true
