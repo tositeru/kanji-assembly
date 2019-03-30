@@ -82,7 +82,11 @@ module.exports = (sequelize, DataTypes) => {
       if (!CommonValidator.validatePassword(signupParam.password)) {
         errorMessages.password = '使用できないパスワードを登録に使用しました'
       }
-      logger.error('Add', `name=${signupParam.name},email=${signupParam.email}`)
+      logger.error(
+        'Add',
+        `name=${signupParam.name},email=${signupParam.email}`,
+        error
+      )
       return errorMessages
     }
   }

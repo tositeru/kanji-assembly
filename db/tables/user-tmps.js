@@ -8,7 +8,7 @@ module.exports = {
       primaryKey: true,
       allowNull: false,
       validate: {
-        len: [3, 64]
+        len: [2, 64]
       }
     },
     password: {

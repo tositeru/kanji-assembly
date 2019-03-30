@@ -12,7 +12,7 @@
           v-flex()
             h2(class="display-1") ユーザー登録
         v-layout(column)
-          v-text-field(v-model="signupInfo.name" label="名前" type="text" :rules="[rules.required]" :loading="doCheckingName" @change='changeName' append-icon='check_circle')
+          v-text-field(v-model="signupInfo.name" label="名前" type="text" :rules="[rules.required, rules.minName]" :loading="doCheckingName" @change='changeName' append-icon='check_circle')
             template(v-slot:append)
               div(v-if="errorMessage.name" class="error--text") {{ errorMessage.name }}
           v-text-field(v-model="signupInfo.email" label="メールアドレス" type="text" :rules="[rules.required, rules.email]" :loading="doCheckingEmail" @change='changeEmail' append-icon='check_circle')
@@ -32,12 +32,13 @@
             div(class="error error--text text--lighten-4 display-1 text-xs-center") {{ errorMessage.caption }}
           v-flex(class="text-xs-right")
             v-btn(@click="doShowPrivacyPolicy = !doShowPrivacyPolicy") 登録
-        v-dialog(v-model="doShowPrivacyPolicy" persistent max-width="50%")
+        v-dialog(v-model="doShowPrivacyPolicy" persistent v-bind="getPrivacyPolicyDialogAttributes")
           v-card
             div(class="text-xs-center display-1") ご登録の前に
           privacy-policy()
           v-card
             div(class="text-xs-right")
+              v-btn(@click="doShowPrivacyPolicy = false") キャンセル
               v-btn(@click="send") 同意して登録
 </template>
 
@@ -73,6 +74,7 @@ export default {
       },
       rules: {
         required: v => !!v || '入力してください',
+        minName: v => v.length > 1 || '二文字以上にしてください',
         email: v => validator.isEmail(v) || 'メールアドレスを入力してください',
         min: v =>
           v.length >= MIN_PASSWORD_LENGTH ||
@@ -96,6 +98,12 @@ export default {
     passwordColor() {
       const messages = ['error', 'warning', 'success']
       return messages[Math.floor(this.progressPassword / 50)]
+    },
+    getPrivacyPolicyDialogAttributes() {
+      const isXs = this.$vuetify.breakpoint.name === 'xs'
+      return {
+        width: isXs ? '90%' : '50%'
+      }
     }
   },
   methods: {

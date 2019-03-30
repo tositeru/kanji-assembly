@@ -23,6 +23,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+footer {
+  margin-top: 25px;
+}
+
 .bottom-menu {
   width: 100%;
   // position: absolute;

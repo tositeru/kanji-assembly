@@ -71,6 +71,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+$breakpoint-xs: 600px;
+
+/* $break-point以下の時に@contentを適用 */
+@mixin max-screen($break-point) {
+  @media screen and (max-width: $break-point) {
+    @content;
+  }
+}
+
 .today-question {
   margin: 13px auto;
 
@@ -85,6 +94,10 @@ export default {
     padding-top: 10px;
     padding-left: 10px;
     padding-right: 10px;
+
+    @include max-screen($breakpoint-xs) {
+      max-width: 75vw;
+    }
   }
 }
 </style>
