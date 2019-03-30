@@ -8,7 +8,7 @@
       v-layout(class="strokes" align-center justify-space-around row fill-height wrap)
         div(v-for="(line, i) in question.lines" :key="i" class="stroke elevation-2" :style="`background-image: url(${getStrokeImage(line.kind)});`")
           | x{{line.count}}
-    v-layout(row align-center)
+    v-layout(column align-center)
         v-flex(grow)
             v-text-field(v-model="answer" :rules="answerRules" :counter="1" required label="回答" reverse class="text-xs-right")
         v-flex(shrink)
@@ -77,6 +77,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+$breakpoint-xs: 600px;
+
+/* $break-point以下の時に@contentを適用 */
+@mixin max-screen($break-point) {
+  @media screen and (max-width: $break-point) {
+    @content;
+  }
+}
+
 .hint-button {
   border-radius: 45%;
 }
@@ -91,6 +100,11 @@ export default {
   background-size: cover;
   text-align: right;
   vertical-align: bottom;
+
+  @include max-screen($breakpoint-xs) {
+    width: 70px;
+    height: 70px;
+  }
 }
 
 .btn-answer {

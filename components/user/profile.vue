@@ -23,7 +23,7 @@
                   v-list-tile-sub-title メールアドレス
           v-card-actions(reverse)
             v-btn(@click="doEdit = !doEdit") 編集
-            v-dialog(v-model="doEdit" persistent max-width="60%")
+            v-dialog(v-model="doEdit" persistent :width="getUpdateDialogWidth")
               v-form
                 v-card
                   v-card-title(class="display-1 text-xs-center") ユーザー情報の変更
@@ -38,7 +38,7 @@
                     v-spacer
                     v-btn(color="blue darken-1" flat @click="doEdit = false") キャンセル
                     v-btn(color="blue darken-1" flat @click="send()") 送信
-            v-dialog(v-model="doDelete" persistent max-width="50%")
+            v-dialog(v-model="doDelete" persistent :width="getUpdateDialogWidth")
               v-form
                 v-card
                   v-card-title(class="display-1 text-xs-center") ユーザーの削除
@@ -80,6 +80,18 @@ export default {
       showOldPassword: false,
       rules: {
         required: v => !!v || '入力してください'
+      }
+    }
+  },
+  computed: {
+    getUpdateDialogWidth() {
+      switch (this.$vuetify.breakpoint.name) {
+        case 'xs':
+          return '90vw'
+        case 'sm':
+          return '80vw'
+        default:
+          return '50vw'
       }
     }
   },

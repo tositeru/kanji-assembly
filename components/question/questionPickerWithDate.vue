@@ -26,19 +26,20 @@
       )
         v-spacer()
         v-btn(flat color="primary" @click="menu = false") Cancel
-    v-dialog(v-model="selectQuestionIdDialog" width="50%")
-      v-card
-        v-card-title(class="text-xs-center") 問題の選択
-        v-card-text()
-          v-layout(justify-space-around)
-            v-btn(v-for="(id, i) in currentQuestionIdList" :key="i" @click="nextQuestionSelectFlow(i)")
-              | その{{ i+1 }}
-        v-card-actions
-            v-btn(@click="closeQuestionList()") 戻る
-      v-dialog(v-model="notifyNoneQuestionDialog" width="50%")
+      v-dialog(v-model="selectQuestionIdDialog" v-bind="getSelectQuestionIdDialogAttributes")
         v-card
-          v-card-text(class="text-xs-center")
-            | その日に問題はありません。
+          v-card-title(class="text-xs-center") 問題の選択
+          v-card-text()
+            v-layout(align-space-around justify-center fill-height class="select-question-id-layout")
+              v-flex(v-for="(id, i) in currentQuestionIdList" :key="i")
+                v-btn(@click="nextQuestionSelectFlow(i)" class="question-id-btn")
+                  | その{{ i+1 }}
+          v-card-actions
+              v-btn(@click="closeQuestionList()") 戻る
+        v-dialog(v-model="notifyNoneQuestionDialog" min-width="50%")
+          v-card
+            v-card-text(class="text-xs-center")
+              | その日に問題はありません。
 </template>
 <script>
 import moment from 'moment'
@@ -97,6 +98,23 @@ export default {
   computed: {
     selectQuestionName() {
       return `その${this.selectQuestionId + 1}`
+    },
+    getSelectQuestionIdDialogAttributes() {
+      let width = '0%'
+      switch (this.$vuetify.breakpoint.name) {
+        case 'xs':
+          width = '90vw'
+          break
+        case 'sm':
+          width = '80vw'
+          break
+        default:
+          width = '50vw'
+          break
+      }
+      return {
+        width: width
+      }
     }
   },
   watch: {
@@ -160,4 +178,25 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+$breakpoint-xs: 600px;
+
+/* $break-point以下の時に@contentを適用 */
+@mixin max-screen($break-point) {
+  @media screen and (max-width: $break-point) {
+    @content;
+  }
+}
+
+.select-question-id-layout {
+  flex-direction: row;
+  @include max-screen($breakpoint-xs) {
+    flex-direction: column;
+  }
+}
+
+.question-id-btn {
+  @include max-screen($breakpoint-xs) {
+    width: 100%;
+  }
+}
 </style>

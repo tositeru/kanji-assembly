@@ -2,11 +2,11 @@
   sub
     v-layout(row reverse)
       v-btn(@click="backToQuestion()") 戻る
-    v-sheet(color="grey lighten-3" height="50vh")
-      v-layout(align-center justify-center row fill-height)
+    v-sheet(color="grey lighten-3" style="overflow:scroll;")
+      v-layout(align-center justify-space-around column fill-height)
         v-flex(v-for="(hint, i) in hints" :key="i" class="text-xs-center")
           div(v-if="hint.opened")
-            | {{hint.text}}
+            div(class="hint-text title") {{hint.text}}
           div(v-else)
             v-btn(@click="openHint(i)") 助言{{i+1}}を見る
 </template>
@@ -34,5 +34,10 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss"scoped>
+.hint-text {
+  margin: 10px;
+  min-height: 32px;
+  line-height: 1.5;
+}
 </style>
