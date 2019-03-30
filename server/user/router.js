@@ -247,12 +247,21 @@ router.post('/update', requireAuthToken, async function(req, res) {
     )
 
     if (!updateParam.doValid()) {
-      logError(req, 'pass to invalid parameters...', updateParam.toObj())
-      return res.status(403).json({
-        messages: {
-          caption: '不当な値が渡されました。'
-        }
-      })
+      if (!updateParam.name && !updateParam.email && !updateParam.password) {
+        logError(req, 'pass to not change parameters...', updateParam.toObj())
+        return res.status(403).json({
+          messages: {
+            caption: '変更するものがありません'
+          }
+        })
+      } else {
+        logError(req, 'pass to invalid parameters...', updateParam.toObj())
+        return res.status(403).json({
+          messages: {
+            caption: '不当な値が渡されました。'
+          }
+        })
+      }
     }
     // 同名のユーザーやメールアドレスがないか確認する
     if (updateParam.name || updateParam.email) {

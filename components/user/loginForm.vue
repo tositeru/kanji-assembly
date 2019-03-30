@@ -19,6 +19,7 @@
 </template>
 <script>
 import validator from 'validator'
+import loginParameter from './loginParameter.js'
 
 export default {
   data() {
@@ -35,6 +36,10 @@ export default {
       },
       errorMessage: ''
     }
+  },
+  mounted() {
+    this.loginInfo.email = loginParameter.getEmail()
+    this.loginInfo.password = loginParameter.getPassword()
   },
   methods: {
     async send() {

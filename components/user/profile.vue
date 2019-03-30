@@ -106,6 +106,11 @@ export default {
   },
   methods: {
     async send() {
+      if (this.updateInfo.password !== this.updateInfo.confirmPassword) {
+        this.errorMessages.set({}, '確認用パスワードが一致していません')
+        return
+      }
+
       try {
         const result = await this.$store.dispatch(
           'user/update',
