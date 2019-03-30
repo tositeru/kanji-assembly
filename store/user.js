@@ -22,6 +22,22 @@ export const mutations = {
   }
 }
 
+/**
+ * @param {string|null} email
+ * @param {string|null} password
+ */
+function saveAuthInfo(email, password) {
+  if (process.client) {
+    const localStorage = window.localStorage
+    if (typeof email === 'string') {
+      localStorage.setItem('email', email)
+    }
+    if (typeof email === 'string') {
+      localStorage.setItem('password', password)
+    }
+  }
+}
+
 export const actions = {
   async signup({ state, commit }, { name, email, password }) {
     if (state.auth) {
@@ -34,6 +50,10 @@ export const actions = {
       email: email,
       password: password
     })
+    if (res.status === 200) {
+      saveAuthInfo(email, password)
+    }
+
     return {
       isSuccessed: res.status === 200
     }
@@ -50,9 +70,12 @@ export const actions = {
         email: email,
         password: password
       })
+
       if (res.status === 200) {
         commit('setAuthToken', res.data.token)
         Cookie.set('auth', res.data.token, { expires: 10 })
+
+        saveAuthInfo(email, password)
       }
 
       return Object.assign(res.data, { isSuccessed: true })
@@ -133,6 +156,8 @@ export const actions = {
       if (res.status === 200) {
         commit('setAuthToken', res.data.token)
         Cookie.set('auth', res.data.token, { expires: 10 })
+
+        saveAuthInfo(email, password)
       }
 
       return {
@@ -160,6 +185,8 @@ export const actions = {
       if (res.data.isSuccessed) {
         commit('setAuthToken', null)
         Cookie.set('auth', null)
+
+        saveAuthInfo('', '')
       }
 
       return {
@@ -208,6 +235,8 @@ export const actions = {
         token: token,
         password: password
       })
+
+      saveAuthInfo(null, password)
 
       result.isSuccessed = true
       return result

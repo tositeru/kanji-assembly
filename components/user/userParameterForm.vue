@@ -27,6 +27,7 @@
 <script>
 import validator from 'validator'
 import axios from 'axios'
+import loginParameter from './loginParameter.js'
 
 export class Parameters {
   constructor(name, email, password) {
@@ -113,6 +114,9 @@ export default {
       const messages = ['error', 'warning', 'success']
       return messages[Math.floor(this.progressPassword / 50)]
     }
+  },
+  mounted() {
+    this.params.setOldPassword(loginParameter.getPassword())
   },
   methods: {
     async changeName() {
