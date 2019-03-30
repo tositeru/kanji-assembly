@@ -45,17 +45,28 @@ export const actions = {
       return null
     }
 
-    const res = await axios.post('/user/signup', {
-      name: name,
-      email: email,
-      password: password
-    })
-    if (res.status === 200) {
-      saveAuthInfo(email, password)
-    }
+    try {
+      const res = await axios.post('/user/signup', {
+        name: name,
+        email: email,
+        password: password
+      })
+      if (res.status === 200) {
+        saveAuthInfo(email, password)
+      }
 
-    return {
-      isSuccessed: res.status === 200
+      return {
+        isSuccessed: res.status === 200
+      }
+    } catch (error) {
+      const errorMessages = error.response.data.messages
+      if (!errorMessages.caption) {
+        errorMessages.caption = '登録に失敗しました'
+      }
+      return {
+        isSuccessed: false,
+        messages: errorMessages
+      }
     }
   },
 

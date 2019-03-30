@@ -28,6 +28,8 @@
           v-text-field(v-model="signupInfo.confirmPassword" label="パスワード(確認用)" :type="showPassword2 ? 'text' : 'password'"
             :append-icon="showPassword2 ? 'visibility_off' : 'visibility'" @click:append="showPassword2 = !showPassword2"
             :rules="[rules.required, rules.matchPassword]" counter)
+          v-flex(v-if="errorMessage.caption")
+            div(class="error error--text text--lighten-4 display-1 text-xs-center") {{ errorMessage.caption }}
           v-flex(class="text-xs-right")
             v-btn(@click="send") 登録
 </template>

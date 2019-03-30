@@ -334,14 +334,18 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     if (!signupParam.doValid()) {
       logError(req, 'invalid parameters')
       return res.status(403).json({
-        messages: 'パラメータが正しくありません'
+        messages: {
+          caption: 'パラメータが正しくありません'
+        }
       })
     }
 
     if (await User.isExist(signupParam.name, signupParam.email)) {
       logError(req, 'invalid parameters because has duplicate parameter')
       return res.status(403).json({
-        messages: '既存のユーザーと同じ情報を持っています'
+        messages: {
+          caption: '既存のユーザーと同じ情報を持っています'
+        }
       })
     }
 
