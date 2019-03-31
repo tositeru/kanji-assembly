@@ -7,14 +7,22 @@ const Logger = require('../../src/log')
 
 const logger = new Logger('Send Mail')
 
-const baseURL = 'https://localhost:3000'
+let baseURL = 'https://localhost:3000'
+switch (process.env.NODE_ENV) {
+  case 'production':
+    baseURL = 'https://'
+    break
+  default:
+    baseURL = 'https://localhost:3000'
+    break
+}
 
 /**
  * URLを作成する
  * @param {string} router
  */
 function makeUrl(router) {
-  return path.join(baseURL, router)
+  return baseURL + '/' + router
 }
 
 /**

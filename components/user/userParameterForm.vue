@@ -26,7 +26,6 @@
 </template>
 <script>
 import validator from 'validator'
-import axios from 'axios'
 import loginParameter from './loginParameter.js'
 
 export class Parameters {
@@ -122,9 +121,12 @@ export default {
   methods: {
     async changeName() {
       this.doCheckingName = true
-      this.innerErrorMessage.name = (await checkUserParam(
-        'name',
-        this.params.name
+      this.innerErrorMessage.name = (await this.$store.dispatch(
+        'user/checkUserParam',
+        {
+          key: 'name',
+          param: this.params.name
+        }
       ))
         ? '同じ名前のユーザーが存在しています'
         : null
@@ -132,33 +134,18 @@ export default {
     },
     async changeEmail() {
       this.doCheckingEmail = true
-      this.innerErrorMessage.email = (await checkUserParam(
-        'email',
-        this.params.email
+      this.innerErrorMessage.email = (await this.$store.dispatch(
+        'user/checkUserParam',
+        {
+          key: 'email',
+          param: this.params.email
+        }
       ))
         ? '同じメールアドレスのユーザーが存在しています'
         : null
       this.doCheckingEmail = false
     }
   }
-}
-
-async function checkUserParam(key, param) {
-  try {
-    const params = {}
-    params[key] = param
-    const res = await axios.get('/user/check', {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      params: params
-    })
-
-    return res.data.status[key]
-  } catch (err) {
-    alert(err)
-  }
-  this.doCheckingEmail = false
 }
 </script>
 <style lang="sass" scoped>

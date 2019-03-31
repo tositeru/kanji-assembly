@@ -100,6 +100,7 @@ module.exports = {
   serverMiddleware: [
     'redirect-ssl',
     bodyParser.json(),
+    bodyParser.urlencoded({ extended: true }),
     '~/server/Q/router.js',
     '~/server/user/router.js'
   ]

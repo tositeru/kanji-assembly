@@ -400,23 +400,33 @@ router.get('/signup/:token', refusalAuthToken, async function(req, res) {
  * @params email メールアドレス
  */
 router.get('/check', async function(req, res) {
-  let nameCount = 0
-  if (req.query.name) {
-    nameCount = await User.isExist(req.query.name, null)
-    nameCount += await UserTmp.isExist(req.query.name, null)
-  }
-  let emailCount = 0
-  if (req.query.email) {
-    emailCount = await User.isExist(null, req.query.email)
-    emailCount += await UserTmp.isExist(null, req.query.email)
-  }
+  try {
+    let nameCount = 0
+    if (req.query.name) {
+      nameCount = await User.isExist(req.query.name, null)
+      nameCount += await UserTmp.isExist(req.query.name, null)
+    }
+    let emailCount = 0
+    if (req.query.email) {
+      emailCount = await User.isExist(null, req.query.email)
+      emailCount += await UserTmp.isExist(null, req.query.email)
+    }
 
-  return res.json({
-    status: {
+    const status = {
       name: nameCount > 0,
       email: emailCount > 0
     }
-  })
+    logInfo(
+      req,
+      `count=${JSON.stringify(status)} param=${JSON.stringify(req.query)}`
+    )
+    return res.json({
+      status: status
+    })
+  } catch (error) {
+    logError(req, error, req.query)
+    return res.status(500).json({})
+  }
 })
 
 router.post('/request-reset-password', async function(req, res) {
