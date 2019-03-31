@@ -1,11 +1,10 @@
 <template lang="pug">
-  v-layout()
-    v-flex(grop)
-      v-sheet(color="grey lighten-3" height="50vh")
-        v-flex(v-if="!error")
-          v-progress-circular(indeterminate color="primary")
-        v-flex(v-else)
-          | {{error}}
+  v-sheet(color="grey lighten-3" height="50vh" width="100%")
+    v-layout(align-center justify-center row fill-height)
+      v-flex(v-if="!error" shrink align-self-center)
+        v-progress-circular(indeterminate color="primary" :size="128" :width="16")
+      v-flex(v-else class="text-xs-center")
+        | {{error}}
 </template>
 
 <script>
@@ -24,10 +23,11 @@ export default {
         date: QDate.date,
         dateId: QDate.dateId
       })
-      if (Q) {
-        this.$emit('change-status', STATUS.MAIN)
+      if (Q.failed) {
+        this.error = Q.message
+        // this.$emit('change-status', STATUS.UNKNOWN)
       } else {
-        this.$emit('change-status', STATUS.UNKNOWN)
+        this.$emit('change-status', STATUS.MAIN)
       }
     } catch (e) {
       this.error = e

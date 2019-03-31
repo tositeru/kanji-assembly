@@ -1,7 +1,9 @@
 'use strict'
 const moment = require('moment')
-const consola = require('consola')
 const { TABLE_DEFINETION } = require('../tables/questions.js')
+const Logger = require('../../src/log')
+
+const logger = new Logger('DB Question')
 
 module.exports = (sequelize, DataTypes) => {
   const Questions = sequelize.define('Questions', TABLE_DEFINETION, {
@@ -23,6 +25,8 @@ module.exports = (sequelize, DataTypes) => {
     try {
       const start = moment(date)
       const end = start.clone().add(1, 'day')
+
+      logger.info('getByDate', `date=${date},dateId=${dateId}`)
       return await Questions.findOne({
         where: {
           show_date: {
@@ -32,6 +36,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       })
     } catch (err) {
+      logger.error('getByDate', `date=${date},dateId=${dateId}`, err)
       return null
     }
   }
@@ -57,9 +62,10 @@ module.exports = (sequelize, DataTypes) => {
         }
         questionList[date].push(l.date_id)
       }
+      logger.info('getQuestionListInMonth', `month=${month}`)
       return questionList
     } catch (err) {
-      consola.error(err)
+      logger.error('getQuestionListInMonth', `month=${month}`, err)
       return null
     }
   }

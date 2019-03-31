@@ -1,5 +1,8 @@
 'use strict'
 const { TABLE_DEFINETION } = require('../tables/hints.js')
+const Logger = require('../../src/log')
+
+const logger = new Logger('DB Hints')
 
 module.exports = (sequelize, DataTypes) => {
   const Hints = sequelize.define('Hints', TABLE_DEFINETION, {
@@ -34,22 +37,37 @@ module.exports = (sequelize, DataTypes) => {
   }
   Hints.getByQuestionId = async questionId => {
     try {
-      return await Hints.findAll({
+      const result = await Hints.findAll({
         where: {
           question_id: questionId
         }
       })
-    } catch (err) {}
+      logger.info('getByQuestionId', `Q id=${questionId}`)
+      return result
+    } catch (err) {
+      logger.error('getByQuestionId', `Q id=${questionId}`, err)
+      return null
+    }
   }
   Hints.getByQuestionIDAndLevel = async (questionId, level) => {
     try {
-      return await Hints.findOne({
+      const result = await Hints.findOne({
         where: {
           question_id: questionId,
           level: level
         }
       })
+      logger.info(
+        'getByQuestionIDAndLevel',
+        `Q id=${questionId},level=${level}`
+      )
+      return result
     } catch (err) {
+      logger.error(
+        'getByQuestionIDAndLevel',
+        `Q id=${questionId},level=${level}`,
+        err
+      )
       return null
     }
   }

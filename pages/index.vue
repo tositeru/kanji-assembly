@@ -1,7 +1,7 @@
 <template lang="pug">
   v-container(fluid)
     g-title(class="text-xs-center")
-      div(class="login")
+      div(v-if="!doLogin" class="login")
         n-link(to='/login') ログイン
         | /
         n-link(to='/signup') サインアップ
@@ -21,6 +21,11 @@ export default {
   data() {
     return {
       questionDate: new QuestionDate(moment().format('YYYY-MM-DD'), 0)
+    }
+  },
+  computed: {
+    doLogin() {
+      return !!this.$store.state.user.auth
     }
   },
   beforeCreate() {

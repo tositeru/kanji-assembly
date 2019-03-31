@@ -68,12 +68,19 @@ export const actions = {
   // 日付から問題を取得する
   async query({ commit }, { date, dateId }) {
     const param = makeQuestionParam(date, dateId)
-    const res = await axios.post('/Q', param)
-    if (res.data === 'Bad') {
-      return null
+    try {
+      const res = await axios.post('/Q', param)
+      if (res.data === 'Bad') {
+        return null
+      }
+      commit('set', res.data)
+      return res.data
+    } catch (error) {
+      return {
+        failed: true,
+        message: error.response.data.message || '問題を取得できませんでした'
+      }
     }
-    commit('set', res.data)
-    return res.data
   },
 
   // 回答を送る
@@ -84,10 +91,14 @@ export const actions = {
 
     const param = makeParam(state)
     param.answers = answers
-    const res = await axios.post('/Q/answer', param)
-    const result = res.data === 'OK'
-    commit('setResult', result)
-    return result
+    try {
+      const res = await axios.post('/Q/answer', param)
+      const result = res.status === 200
+      commit('setResult', result)
+      return result
+    } catch (error) {
+      return false
+    }
   },
 
   // ヒントパネルを開ける事をサーバーに告げる
