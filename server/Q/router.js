@@ -57,7 +57,7 @@ router.post('/', async function(req, res) {
     date: req.body.date,
     dateId: req.body.dateId
   }
-  if (!param.date || !param.dateId) {
+  if (typeof param.date !== 'string' || typeof param.dateId !== 'number') {
     logError(req, `invalid parameters param=${JSON.stringify(param)}`)
     return res.status(400).json({
       message: 'データ取得に失敗'

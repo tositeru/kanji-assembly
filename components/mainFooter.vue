@@ -15,7 +15,7 @@
               v-card()
                 v-card-title() ユーザー登録が必要です
                 v-card-text() 問題一覧を見るためにはユーザー登録が必要です。
-                v-action()
+                v-card-actions()
                   v-btn(@click="doShowInviteSignupDialog=false") OK
                   v-btn(@click="jumpToSignup") 登録画面へ
       v-flex(primary py-3 text-xs-center xs12)

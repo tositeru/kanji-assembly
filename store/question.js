@@ -77,6 +77,7 @@ export const actions = {
       return res.data
     } catch (error) {
       return {
+        failed: true,
         message: error.response.data.message || '問題を取得できませんでした'
       }
     }
