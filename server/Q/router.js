@@ -97,7 +97,7 @@ router.get('/getListInMonth', async function(req, res) {
     const questionDateList = await Questions.getQuestionListInMonth('2019-03')
     return res.json(questionDateList)
   } catch (err) {
-    return res.stataus(500).send('failed to get question list')
+    return res.statas(500).send('failed to get question list')
   }
 })
 
