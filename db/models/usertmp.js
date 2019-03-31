@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   /**
-   * 同じパラメータがないか数えす
+   * 同じパラメータがないか返す
    * @param {string} name
    * @param {string} email
    */
@@ -25,9 +25,9 @@ module.exports = (sequelize, DataTypes) => {
     const expirationDate = expirationTime()
     const count = await UserTmp.count({
       where: {
-        [sequelize.Op.or]: [{ name: name }, { email: email }],
+        $or: [{ name: name }, { email: email }],
         updatedAt: {
-          [sequelize.Op.gte]: expirationDate.toISOString()
+          $gte: expirationDate.toISOString()
         }
       }
     })
@@ -82,7 +82,11 @@ module.exports = (sequelize, DataTypes) => {
       if (!CommonValidator.validatePassword(signupParam.password)) {
         errorMessages.password = '使用できないパスワードを登録に使用しました'
       }
-      logger.error('Add', `name=${signupParam.name},email=${signupParam.email}`)
+      logger.error(
+        'Add',
+        `name=${signupParam.name},email=${signupParam.email}`,
+        error
+      )
       return errorMessages
     }
   }
@@ -93,7 +97,7 @@ module.exports = (sequelize, DataTypes) => {
       where: {
         token: token,
         updatedAt: {
-          [sequelize.Op.gte]: expirationDate.toISOString()
+          $gte: expirationDate.toISOString()
         }
       }
     })
@@ -106,8 +110,9 @@ module.exports = (sequelize, DataTypes) => {
       password: usertmp.password,
       password2: usertmp.password2
     }
-    usertmp.destroy()
-    logger.error(
+    await usertmp.destroy()
+
+    logger.info(
       'isValidToken',
       `token=${token},name=${result.name},email=${result.email}`
     )

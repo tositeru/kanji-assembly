@@ -1,11 +1,9 @@
-const path = require('path')
 const express = require('express')
-const pug = require('pug')
 const log4js = require('log4js')
 const cookieparser = require('cookieparser')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
-const { User, UserTmp } = require('../../db/database')
+const { User, UserTmp, ResetPasswordUsers } = require('../../db/database')
 const Logger = require('../../src/log')
 const Datatype = require('./defineDatatypes')
 
@@ -131,12 +129,21 @@ router.post('/login', refusalAuthToken, async function(req, res) {
       })
     }
 
-    const token = await User.login(loginParam)
-    if (!token) {
+    const result = await User.login(loginParam)
+    if (!result) {
       logError(req, 'failed to authentication')
       return res.status(403).json({
         message: '認証に失敗しました'
       })
+    }
+    const { user, token } = result
+    if (MailSender.enableMail()) {
+      const htmlContent = MailSender.getLoginMailContent(token)
+      const sender = new MailSender(
+        '漢字組み立て工場　ログインしました',
+        htmlContent
+      )
+      sender.send(`${user.name}さま <${user.email}>`)
     }
 
     logInfo(req, `email=${loginParam.email}`)
@@ -172,18 +179,35 @@ router.post('/logout', requireAuthToken, async function(req, res) {
 
 router.delete('/delete', requireAuthToken, async function(req, res) {
   try {
-    const isSuccessed = await User.delete(req.userAuth)
+    const { isSuccessed, user, message } = await User.delete(
+      req.userAuth,
+      req.body.password
+    )
     if (!isSuccessed) {
       logError(req, 'failed to delete user')
       return res.status(403).json({
-        message: 'ユーザーの削除に失敗しました'
+        isSuccessed: false,
+        message: message
       })
     }
 
-    return res.json()
+    if (MailSender.enableMail()) {
+      const htmlContent = MailSender.getDeleteMailContent()
+      const sender = new MailSender(
+        '漢字組み立て工場　ユーザー情報の削除',
+        htmlContent
+      )
+      sender.send(`${user.name}さま <${user.email}>`)
+    }
+
+    logInfo(req, 'OK')
+    return res.status(200).json({
+      isSuccessed: true
+    })
   } catch (error) {
     logError(req, error)
     return res.status(500).send({
+      isSuccessed: false,
       message: 'サーバー側の不具合によりユーザーの削除に失敗しました'
     })
   }
@@ -192,8 +216,10 @@ router.delete('/delete', requireAuthToken, async function(req, res) {
 router.get('/get', requireAuthToken, async function(req, res) {
   try {
     const user = await User.getByAuthToken(req.userAuth)
-    if (!user) {
-      return res.status(403)
+    if (user.error) {
+      return res.status(403).send({
+        notFoundUser: user.error === 2
+      })
     }
 
     logInfo(req, `OK`)
@@ -217,17 +243,25 @@ router.post('/update', requireAuthToken, async function(req, res) {
       user.name !== req.body.name ? req.body.name : null,
       user.email !== req.body.email ? req.body.email : null,
       req.body.password || null,
-      req.body.oldPassword,
-      req.body.doSendMail || true
+      req.body.oldPassword
     )
 
     if (!updateParam.doValid()) {
-      logError(req, 'pass to invalid parameters...', updateParam.toObj())
-      return res.status(403).json({
-        messages: {
-          caption: '不当な値が渡されました。'
-        }
-      })
+      if (!updateParam.name && !updateParam.email && !updateParam.password) {
+        logError(req, 'pass to not change parameters...', updateParam.toObj())
+        return res.status(403).json({
+          messages: {
+            caption: '変更するものがありません'
+          }
+        })
+      } else {
+        logError(req, 'pass to invalid parameters...', updateParam.toObj())
+        return res.status(403).json({
+          messages: {
+            caption: '不当な値が渡されました。'
+          }
+        })
+      }
     }
     // 同名のユーザーやメールアドレスがないか確認する
     if (updateParam.name || updateParam.email) {
@@ -255,11 +289,21 @@ router.post('/update', requireAuthToken, async function(req, res) {
         messages: updateResultOrErrorMessages
       })
     }
+    const updatedUser = updateResultOrErrorMessages.user
+    const prevParam = updateResultOrErrorMessages.prevParam
     // 編集前のパラメータをどこかに保存しておく updateResult.prevParam
 
     // 更新したことを伝えるメールを送信する
-    if (process.NODE_ENV !== 'test' || updateParam.doSendMail) {
-      // TODO
+    if (MailSender.enableMail()) {
+      const htmlContent = MailSender.getUpdateMailContent()
+      const sender = new MailSender(
+        '漢字組み立て工場　ユーザー情報の更新',
+        htmlContent
+      )
+      sender.send(
+        `${updatedUser.name}さま <${updatedUser.email}>`,
+        prevParam.email
+      )
     }
 
     logInfo(req, 'OK')
@@ -276,11 +320,6 @@ router.post('/update', requireAuthToken, async function(req, res) {
   }
 })
 
-//* * 認証用メールのテンプレート*/
-const authMailTemplateFn = pug.compileFile(
-  path.resolve(__dirname, 'authMailTemplate.pug')
-)
-
 /**
  * ユーザー登録のAPI
  * req.bodyにはDatatype.SignupParametersに渡すことができるパラメータがあることを期待する
@@ -290,22 +329,23 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
     const signupParam = new Datatype.SignupParameters(
       req.body.name,
       req.body.email,
-      req.body.password,
-      {
-        doSendMail: req.body.doSendMail
-      }
+      req.body.password
     )
     if (!signupParam.doValid()) {
       logError(req, 'invalid parameters')
       return res.status(403).json({
-        messages: 'パラメータが正しくありません'
+        messages: {
+          caption: 'パラメータが正しくありません'
+        }
       })
     }
 
     if (await User.isExist(signupParam.name, signupParam.email)) {
       logError(req, 'invalid parameters because has duplicate parameter')
       return res.status(403).json({
-        messages: '既存のユーザーと同じ情報を持っています'
+        messages: {
+          caption: '既存のユーザーと同じ情報を持っています'
+        }
       })
     }
 
@@ -317,16 +357,14 @@ router.post('/signup', refusalAuthToken, async function(req, res) {
       })
     }
 
-    if (signupParam.doSendMail) {
+    if (MailSender.enableMail()) {
       const token = tokenOrError
-      const htmlContent = authMailTemplateFn({
-        url: `https://localhost:3000/user/signup/${token}`
-      })
+      const htmlContent = MailSender.getAuthMailContent(token)
       const sender = new MailSender(
         '漢字組み立て工場　ユーザー確認',
         htmlContent
       )
-      sender.send(`${req.body.name} <${req.body.email}>`)
+      sender.send(`${req.body.name}さま <${req.body.email}>`)
     }
 
     return res.json()
@@ -379,6 +417,90 @@ router.get('/check', async function(req, res) {
       email: emailCount > 0
     }
   })
+})
+
+router.post('/request-reset-password', async function(req, res) {
+  const email = req.body.email
+  try {
+    const user = await User.findOne({
+      where: {
+        email: email
+      }
+    })
+    if (!user) {
+      logError(req, `email=${email} Not exsit user...`)
+      return res.status(400).json({
+        message: 'パスワード再設定要求に失敗しました'
+      })
+    }
+    const token = await ResetPasswordUsers.add(email)
+    if (!token) {
+      logError(req, `email=${email} failed to add column...`)
+      return res.status(400).json({
+        message: 'パスワード再設定要求に失敗しました'
+      })
+    }
+    if (MailSender.enableMail()) {
+      const contents = MailSender.getResetPasswordContent(token)
+      const sender = new MailSender(
+        '漢字組み立て工場 パスワード再設定',
+        contents
+      )
+      sender.send(email)
+    }
+
+    logInfo(req, `email=${email}`)
+    return res.json({})
+  } catch (error) {
+    logError(req, `email=${email} ${error}`)
+    return res.status(500).json({
+      message: 'サーバー側の不具合により情報の取得に失敗しました'
+    })
+  }
+})
+
+router.post('/reset-password', async function(req, res) {
+  const token = req.body.token
+  const password = req.body.password
+
+  try {
+    if (!token || !password) {
+      logError(req, `token=${token},password=${password}`)
+      return res.status(404).json({
+        isSuccessed: false,
+        message: '不正なパラメータです'
+      })
+    }
+
+    const email = await ResetPasswordUsers.isValidToken(token)
+    if (!email) {
+      logError(req, `token=${token}`)
+      return res.status(400).json({
+        isSuccessed: false,
+        message: '不正なアクセスです'
+      })
+    }
+
+    const user = await User.resetPassword(email, password)
+    if (!user) {
+      logError(req, `token=${token}`)
+      return res.status(400).json({
+        isSuccessed: false,
+        message: '不正なアクセスです'
+      })
+    }
+
+    logInfo(req, `Reset password user email=${user.email}`)
+    return res.json({
+      isSuccessed: true
+    })
+  } catch (error) {
+    logError(req, `token=${token} ${error}`)
+    return res.status(500).json({
+      isSuccessed: false,
+      message: 'サーバー側の不具合により処理に失敗しました'
+    })
+  }
 })
 
 module.exports = {

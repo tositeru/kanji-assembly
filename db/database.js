@@ -1,12 +1,12 @@
 const Sequelize = require('sequelize')
+const consola = require('consola')
 const config = require('./config.js')
 
 const sequelize = new Sequelize(
   Object.assign(config.get(), {
     logging: function(msg) {
-      this.consola.log('DATABASE QUERY: ', msg)
-    },
-    operatorsAliases: false
+      consola.log('DATABASE QUERY: ', msg)
+    }
   })
 )
 
@@ -18,5 +18,6 @@ module.exports = {
   KanjiStrokes: sequelize.import('./models/kanjistrokes.js'),
 
   UserTmp: sequelize.import('./models/usertmp.js'),
-  User: sequelize.import('./models/user.js')
+  User: sequelize.import('./models/user.js'),
+  ResetPasswordUsers: sequelize.import('./models/resetpasswordusers.js')
 }

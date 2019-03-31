@@ -5,13 +5,20 @@
     div(class="elevation-3")
       v-tabs(color="cyan" dark slider-color="yellow")
         v-tab(v-for="(tab, i) in tabList" :key="i" ripple) {{ tab.name }}
-        v-tab-item(v-for="(tab, i) in tabList" :key="i")
-          v-card(flat)
-            v-card-text {{ tab.description }}
+        v-tab-item()
+          site()
+        v-tab-item()
+          user()
+        v-tab-item()
+          author()
   </div>
 </template>
 
 <script>
+import Site from '~/components/about/site.vue'
+import User from '~/components/about/user.vue'
+import Author from '~/components/about/author.vue'
+
 class Tab {
   constructor(name, description) {
     this._name = name
@@ -26,12 +33,17 @@ class Tab {
 }
 
 export default {
+  components: {
+    site: Site,
+    user: User,
+    author: Author
+  },
   data() {
     return {
       tabList: [
         new Tab(
           '本サイトについて',
-          '本サイトはお題として出された漢字を構成する線を組み立てて出来上がる漢字を当てるパズルを提供するサイトになります。'
+          '本サイトはお題として出された漢字を構成する線を組み立てて出来る漢字を当てるパズルを提供するサイトになります。'
         ),
         new Tab(
           'プライバシーポリシー',

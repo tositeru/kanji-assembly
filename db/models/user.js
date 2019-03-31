@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
     try {
       const count = await User.count({
         where: {
-          [sequelize.Op.or]: [{ name: name || '' }, { email: email || '' }]
+          $or: [{ name: name || '' }, { email: email || '' }]
         }
       })
       return count > 0
@@ -161,7 +161,10 @@ module.exports = (sequelize, DataTypes) => {
         `id=${user.id} name=${user.name} email=${user.email}`
       )
 
-      return token
+      return {
+        user: user,
+        token: token
+      }
     } catch (error) {
       logger.error('Login', `email=${loginParam.email}`, error)
       return null
@@ -196,7 +199,13 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  User.delete = async userAuth => {
+  User.delete = async (userAuth, password) => {
+    const result = {
+      isSuccessed: false,
+      user: null,
+      message: ''
+    }
+
     try {
       const user = await User.findOne({
         where: {
@@ -205,10 +214,23 @@ module.exports = (sequelize, DataTypes) => {
           updatedAt: userAuth.updatedAt
         }
       })
+
       if (!user) {
         logger.error('Delete', `user id=${userAuth.id} `, 'not find user')
-        return false
+        result.message = '無効な操作です'
+        return result
       }
+
+      const encryptPassword = CommonCrypt.encryptPassword(
+        password,
+        user.password2
+      )
+      if (encryptPassword.hashedPassword !== user.password) {
+        logger.error('Delete', `user id=${userAuth.id} `, 'invalid password')
+        result.message = 'パスワードが異なります。'
+        return result
+      }
+
       user.setDataValue('status', User.STATUS_LOCKED)
       await user.destroy()
 
@@ -217,10 +239,13 @@ module.exports = (sequelize, DataTypes) => {
         `id=${user.id} name=${user.name} email=${user.email}`
       )
 
-      return true
+      result.isSuccessed = true
+      result.user = user
+      return result
     } catch (error) {
       logger.error('Delete', `user id=${userAuth.id}`, error)
-      return false
+      result.message = '無効な操作です'
+      return result
     }
   }
 
@@ -234,12 +259,21 @@ module.exports = (sequelize, DataTypes) => {
         }
       })
       if (!user) {
-        throw new Error('Not found user...')
+        logger.error(
+          'GetByID',
+          `token=${JSON.stringify(authToken)}`,
+          'do not found user...'
+        )
+        return {
+          error: 2
+        }
       }
       return user
     } catch (error) {
       logger.error('GetByID', `token=${JSON.stringify(authToken)}`, error)
-      return null
+      return {
+        error: 1
+      }
     }
   }
 
@@ -308,6 +342,7 @@ module.exports = (sequelize, DataTypes) => {
         user.updatedAt
       )
       return {
+        user: user,
         newToken: newToken,
         prevParam: prevParam
       }
@@ -335,6 +370,32 @@ module.exports = (sequelize, DataTypes) => {
       }
     })
     return userData
+  }
+
+  User.resetPassword = async (email, password) => {
+    try {
+      const user = await User.findOne({
+        where: {
+          email: email,
+          deletedAt: null
+        }
+      })
+      if (!user) {
+        logger.error('ResetPassword', `email=${email}`, 'Not found user...')
+        return false
+      }
+
+      const encryptPassword = CommonCrypt.encryptPassword(password)
+      user.setDataValue('password', encryptPassword.hashedPassword)
+      user.setDataValue('password2', encryptPassword.salt)
+      await user.save()
+
+      logger.info('ResetPassword', `id=${user.id} email=${email}`)
+      return user
+    } catch (error) {
+      logger.error('ResetPassword', `email=${email}`, error)
+      return null
+    }
   }
 
   return User

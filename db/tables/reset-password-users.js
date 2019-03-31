@@ -3,21 +3,11 @@ const Sequelize = require('sequelize')
 
 module.exports = {
   TABLE_DEFINETION: {
-    name: {
-      type: Sequelize.STRING,
-      primaryKey: true,
+    id: {
       allowNull: false,
-      validate: {
-        len: [2, 64]
-      }
-    },
-    password: {
-      type: Sequelize.STRING,
-      allowNull: false
-    },
-    password2: {
-      type: Sequelize.STRING,
-      allowNull: false
+      autoIncrement: true,
+      primaryKey: true,
+      type: Sequelize.INTEGER
     },
     email: {
       type: Sequelize.STRING,

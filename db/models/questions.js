@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       return await Questions.findOne({
         where: {
           show_date: {
-            [sequelize.Op.between]: [start.toISOString(), end.toISOString()]
+            $between: [start.toISOString(), end.toISOString()]
           },
           date_id: dateId
         }
@@ -43,10 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       const list = await Questions.findAll({
         where: {
           show_date: {
-            [sequelize.Op.between]: [
-              start.format('YYYY-MM-DD'),
-              end.format('YYYY-MM-DD')
-            ]
+            $between: [start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')]
           }
         },
         order: [['show_date', 'asc'], ['date_id', 'asc']]

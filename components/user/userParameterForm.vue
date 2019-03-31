@@ -1,6 +1,6 @@
 <template lang="pug">
 	span
-		v-text-field(v-model="params.name" label="名前" type="text" :rules="[rules.required]" :loading="doCheckingName" @change='changeName' append-icon='check_circle')
+		v-text-field(v-model="params.name" label="名前" type="text" :rules="[rules.required, rules.minName]" :loading="doCheckingName" @change='changeName' append-icon='check_circle')
 			template(v-slot:append)
 				div(v-if="errorMessage.name" class="error--text") {{ errorMessage.name }}
 				div(v-if="innerErrorMessage.name" class="error--text") {{ innerErrorMessage.name }}
@@ -27,6 +27,7 @@
 <script>
 import validator from 'validator'
 import axios from 'axios'
+import loginParameter from './loginParameter.js'
 
 export class Parameters {
   constructor(name, email, password) {
@@ -92,6 +93,7 @@ export default {
       doCheckingEmail: false,
       rules: {
         required: v => !!v || '入力してください',
+        minName: v => v.length > 1 || '二文字以上にしてください',
         email: v => validator.isEmail(v) || 'メールアドレスを入力してください',
         min: v =>
           v.length >= MIN_PASSWORD_LENGTH ||
@@ -113,6 +115,9 @@ export default {
       const messages = ['error', 'warning', 'success']
       return messages[Math.floor(this.progressPassword / 50)]
     }
+  },
+  mounted() {
+    this.params.setOldPassword(loginParameter.getPassword())
   },
   methods: {
     async changeName() {

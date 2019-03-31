@@ -1,9 +1,17 @@
+const Sequelize = require('sequelize')
+
+const usedOperatorsAliases = {
+  $or: Sequelize.Op.or,
+  $gte: Sequelize.Op.gte,
+  $between: Sequelize.Op.between
+}
+
 const development = {
   username: 'wciantd',
   database: 'database_development',
   dialect: 'sqlite',
   storage: 'db/database.db',
-  operatorsAliases: false
+  operatorsAliases: usedOperatorsAliases
 }
 const test = {
   username: 'wciantd',
@@ -11,7 +19,7 @@ const test = {
   host: '127.0.0.1',
   dialect: 'sqlite',
   storage: 'db/database.test.db',
-  operatorsAliases: false
+  operatorsAliases: usedOperatorsAliases
 }
 const production = {
   username: 'wciantd',
@@ -19,7 +27,7 @@ const production = {
   database: 'database_production',
   dialect: 'sqlite',
   storage: 'db/database.db',
-  operatorsAliases: false
+  operatorsAliases: usedOperatorsAliases
 }
 
 module.exports = {

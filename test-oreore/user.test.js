@@ -9,7 +9,7 @@ const consola = require('consola')
 const shell = require('shelljs')
 const sleep = require('sleep')
 const UserDatatype = require('../server/user/defineDatatypes')
-const { User, UserTmp } = require('../db/database')
+const { User, UserTmp, ResetPasswordUsers } = require('../db/database')
 const Utils = require('./utils')
 
 axios.defaults.baseURL = 'http://localhost:3003'
@@ -156,10 +156,7 @@ const tests = [
       const param = new UserDatatype.SignupParameters(
         userData.name,
         userData.email,
-        userData.password,
-        {
-          doSendMail: false // データベースを直接見るのでメールは送らない
-        }
+        userData.password
       )
       consola.log('request user/signup')
       const res = await axios.post('user/signup', param.toObj())
@@ -187,7 +184,9 @@ const tests = [
       })
       assert.ok(
         signupResponse.status === 200,
-        'invalid response parameter at signup/:token'
+        `invalid response parameter at signup/:token... status=${
+          signupResponse.status
+        }`
       )
     }
 
@@ -234,10 +233,11 @@ const tests = [
       consola.log('request user/delete')
       const deleteResposnse = await axios.delete('user/delete', {
         data: {
-          token: loginResposnse.data.token
+          password: userData.password
         },
         headers: {
-          'Content-Length': loginResposnse.data.token.length
+          'x-access-token': loginResposnse.data.token,
+          'Content-Length': userData.password
         }
       })
       assert.ok(
@@ -334,8 +334,7 @@ const tests = [
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
-      'tomtomtomtom',
-      { doSendMail: false }
+      'tomtomtomtom'
     )
     await createUser(tomData.name, tomData.email, tomData.password)
 
@@ -413,7 +412,7 @@ const tests = [
     test.pushDisposeObject(null, deleteAllUser)
     // POST /user/login with void parameters
     {
-      const res = await axios.post('user/login', {})
+      const res = await axios.post('user/login')
       assert.ok(res.status === 403, 'failed to reject the void parameter...')
     }
     // POST /user/login with unexsiting parameters
@@ -503,6 +502,7 @@ const tests = [
     // POST /user/delete without auth token
     const res = await axios.delete('user/delete')
     assert.ok(res.status === 401, 'failed to delete without auth token...')
+    test.pushDisposeObject(null, deleteAllUser)
 
     // POST /user/delete without invalid auth token
     // POST /user/delete without auth token
@@ -512,15 +512,70 @@ const tests = [
         '2000-01-02 12:30:30',
         '2001-02-03 13:32:32'
       )
+      const password = 'sojhp'
       const res = await axios.delete('user/delete', {
         data: {
-          token: invalidAuthToken
+          password: password
         },
         headers: {
-          'Content-Length': invalidAuthToken.length
+          'x-access-token': invalidAuthToken,
+          'Content-Length': password.length
         }
       })
-      assert.ok(res.status === 403, 'failed to delete without auth token...')
+      assert.ok(
+        res.status === 403,
+        `Case Invalid Auth Token: invalid status... status=${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `Case Invalid Auth Token: Do not have error message... status=${JSON.stringify(
+          res.data
+        )}`
+      )
+      assert.ok(
+        res.data.isSuccessed === false,
+        `Case Invalid Auth Token: Invalid isSuccessed... status=${JSON.stringify(
+          res.data
+        )}`
+      )
+    }
+    {
+      const userData = new UserDatatype.SignupParameters(
+        'Tom',
+        'tom@mail.com',
+        'tomtomtom'
+      )
+      const token = await createUser(
+        userData.name,
+        userData.email,
+        userData.password
+      )
+      const invalidPassword = 'invalidpassword'
+      const res = await axios.delete('user/delete', {
+        data: {
+          password: 'invalid password'
+        },
+        headers: {
+          'x-access-token': token,
+          'Content-Length': invalidPassword.length
+        }
+      })
+      assert.ok(
+        res.status === 403,
+        `Case Invalid Password: invalid status... status=${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `Case Invalid Password: Do not have error message... status=${JSON.stringify(
+          res.data
+        )}`
+      )
+      assert.ok(
+        res.data.isSuccessed === false,
+        `Case Invalid Password: Invalid isSuccessed... status=${JSON.stringify(
+          res.data
+        )}`
+      )
     }
   }),
   new Utils.Test('Test GET /user/get', async test => {
@@ -529,8 +584,7 @@ const tests = [
     const tomData = new UserDatatype.SignupParameters(
       'Tom',
       'tom@mail.com',
-      'tomtomtomtom',
-      { doSendMail: false }
+      'tomtomtomtom'
     )
     const tomToken = await createUser(
       tomData.name,
@@ -580,8 +634,7 @@ const tests = [
       const tomData = new UserDatatype.SignupParameters(
         'Tom',
         'tom@mail.com',
-        'tomtomtomtom',
-        { doSendMail: false }
+        'tomtomtomtom'
       )
       const tomToken = await createUser(
         tomData.name,
@@ -644,8 +697,7 @@ const tests = [
       const saraData = new UserDatatype.SignupParameters(
         'Sara',
         'Sara@mail.com',
-        'tomtomtomtom',
-        { doSendMail: false }
+        'tomtomtomtom'
       )
       const saraToken = await createUser(
         saraData.name,
@@ -775,8 +827,7 @@ const tests = [
         const otherData = new UserDatatype.SignupParameters(
           'Other',
           'other@mail.com',
-          'otherother',
-          { doSendMail: false }
+          'otherother'
         )
         await createUser(otherData.name, otherData.email, otherData.password)
 
@@ -800,6 +851,134 @@ const tests = [
           }`
         )
       }
+    }
+  }),
+  new Utils.Test('Test reset password', async test => {
+    test.pushDisposeObject(null, deleteAllUser)
+    const userData = new UserDatatype.SignupParameters(
+      'Tom',
+      'tom@mail.com',
+      'tomtomtom'
+    )
+    const token = await createUser(
+      userData.name,
+      userData.email,
+      userData.password
+    )
+    // success
+    {
+      const res = await axios.post('/user/request-reset-password', {
+        email: userData.email
+      })
+      assert.ok(
+        res.status === 200,
+        `/user/request-reset-password: Invalid status ${res.status}`
+      )
+
+      const requestUser = await ResetPasswordUsers.findOne({
+        where: {
+          email: userData.email
+        }
+      })
+
+      const newPassword = 'tomtomtomtom'
+      const urlToken = requestUser.token
+      const resetPasswordRes = await axios.post('/user/reset-password', {
+        token: urlToken,
+        password: newPassword
+      })
+      assert.ok(
+        resetPasswordRes.status === 200,
+        `/user/reset-password : Invalid status ${resetPasswordRes.status}`
+      )
+
+      // 確認
+      const loginParam = new UserDatatype.LoginParameters(
+        userData.email,
+        newPassword
+      )
+      const loginRes = await axios.post('/user/login', loginParam.toObj())
+      assert.ok(
+        loginRes.status,
+        `Check /user/login: Invalid status ${loginRes.status}`
+      )
+      assert.ok(
+        loginRes.data.token !== token,
+        `Check /user/login: Not change Auth Token...`
+      )
+    }
+
+    // /user/request-reset-password invalid email
+    {
+      const res = await axios.post('/user/request-reset-password', {
+        email: 'invalid email'
+      })
+      assert.ok(
+        res.status === 400,
+        `/user/request-reset-password Invalid email : Invalid status ${
+          res.status
+        }`
+      )
+      assert.ok(
+        res.data.message,
+        `/user/request-reset-password Invalid token : Do not exsit message ${JSON.stringify(
+          res.data
+        )}`
+      )
+    }
+    // /user/reset-password invalid token
+    {
+      const res = await axios.post('/user/reset-password', {
+        token: 'invalid token',
+        password: userData.email
+      })
+      assert.ok(
+        res.status === 400,
+        `/user/reset-password Invalid token : Invalid status ${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `/user/reset-password Invalid token : Do not exsit message ${JSON.stringify(
+          res.data
+        )}`
+      )
+    }
+    // /user/reset-password invalid password
+    {
+      // 前準備
+      const requestResetPasswordRes = await axios.post(
+        '/user/request-reset-password',
+        {
+          email: userData.email
+        }
+      )
+      assert.ok(
+        requestResetPasswordRes.status === 200,
+        `/user/request-reset-password: Invalid status ${
+          requestResetPasswordRes.status
+        }`
+      )
+      const requestUser = await ResetPasswordUsers.findOne({
+        where: {
+          email: userData.email
+        }
+      })
+
+      // テスト内容
+      const res = await axios.post('/user/reset-password', {
+        token: requestUser.token,
+        password: null
+      })
+      assert.ok(
+        res.status === 404,
+        `/user/reset-password Invalid password : Invalid status ${res.status}`
+      )
+      assert.ok(
+        res.data.message,
+        `/user/reset-password Invalid password : Do not exsit message ${JSON.stringify(
+          res.data
+        )}`
+      )
     }
   })
 ]

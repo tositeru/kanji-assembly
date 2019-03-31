@@ -5,6 +5,8 @@
         v-flex()
           h2(class="display-1") ログイン
           n-link(to="/signup") ユーザー登録はこちらから
+          div
+            n-link(to="/user/request-reset-password") パスワードを忘れたときはこちらから再設定
       v-layout(column)
         v-text-field(v-model="loginInfo.email" label="メールアドレス" type="text" :rules="[rules.required, rules.email]")
         v-text-field(v-model="loginInfo.password" label="パスワード" :type="showPassword1 ? 'text' : 'password'"
@@ -17,6 +19,7 @@
 </template>
 <script>
 import validator from 'validator'
+import loginParameter from './loginParameter.js'
 
 export default {
   data() {
@@ -33,6 +36,10 @@ export default {
       },
       errorMessage: ''
     }
+  },
+  mounted() {
+    this.loginInfo.email = loginParameter.getEmail()
+    this.loginInfo.password = loginParameter.getPassword()
   },
   methods: {
     async send() {
