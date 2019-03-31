@@ -1,11 +1,13 @@
 const Sequelize = require('sequelize')
-const consola = require('consola')
+const Logger = require('../src/log')
 const config = require('./config.js')
+
+const logger = new Logger('Database')
 
 const sequelize = new Sequelize(
   Object.assign(config.get(), {
     logging: function(msg) {
-      consola.log('DATABASE QUERY: ', msg)
+      logger.info('QUERY', '', msg)
     }
   })
 )
