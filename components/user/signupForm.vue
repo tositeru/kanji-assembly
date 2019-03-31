@@ -45,7 +45,6 @@
 <script>
 import validator from 'validator'
 import consola from 'consola'
-import axios from 'axios'
 import PrivacyPolicy from '~/components/about/privacyPolicy.vue'
 
 const SUCCESSED_MESSAGE =
@@ -124,9 +123,12 @@ export default {
     },
     async changeName() {
       this.doCheckingName = true
-      this.errorMessage.name = (await checkUserParam(
-        'name',
-        this.signupInfo.name
+      this.errorMessage.name = (await this.$store.dispatch(
+        'user/checkUserParam',
+        {
+          key: 'name',
+          param: this.signupInfo.name
+        }
       ))
         ? '同じ名前のユーザーが存在しています'
         : null
@@ -134,32 +136,18 @@ export default {
     },
     async changeEmail() {
       this.doCheckingEmail = true
-      this.errorMessage.email = (await checkUserParam(
-        'email',
-        this.signupInfo.email
+      this.errorMessage.email = (await this.$store.dispatch(
+        'user/checkUserParam',
+        {
+          key: 'email',
+          param: this.signupInfo.email
+        }
       ))
         ? '同じメールアドレスのユーザーが存在しています'
         : null
       this.doCheckingEmail = false
     }
   }
-}
-async function checkUserParam(key, param) {
-  try {
-    const params = {}
-    params[key] = param
-    const res = await axios.get('/user/check', {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      params: params
-    })
-
-    return res.data.status[key]
-  } catch (err) {
-    alert(err)
-  }
-  this.doCheckingEmail = false
 }
 </script>
 <style scoped>

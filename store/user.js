@@ -255,5 +255,20 @@ export const actions = {
       result.message = error.response.data.message
       return result
     }
+  },
+  async checkUserParam({ state }, { key, param }) {
+    try {
+      const params = {}
+      params[key] = param
+      const res = await axios.get('/user/check', {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        params: params
+      })
+      return res.data.status[key]
+    } catch (err) {
+      return false
+    }
   }
 }
