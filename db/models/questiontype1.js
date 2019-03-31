@@ -1,5 +1,8 @@
 'use strict'
 const { TABLE_DEFINETION } = require('../tables/questions-type1.js')
+const Logger = require('../../src/log')
+
+const logger = new Logger('DB QuestionType1')
 
 module.exports = (sequelize, DataTypes) => {
   const QuestionType1 = sequelize.define('QuestionType1s', TABLE_DEFINETION, {
@@ -27,8 +30,10 @@ module.exports = (sequelize, DataTypes) => {
           question_id: questionId
         }
       })
+      logger.info('getByQuestionId', `Q id=${questionId}`)
       return Q
     } catch (error) {
+      logger.error('getByQuestionId', `Q id=${questionId}`, error)
       return null
     }
   }

@@ -1,5 +1,8 @@
 'use strict'
 const { TABLE_DEFINETION } = require('../tables/kanji-strokes.js')
+const Logger = require('../../src/log')
+
+const logger = new Logger('DB KanjiStrokes')
 
 module.exports = (sequelize, DataTypes) => {
   const KanjiStrokes = sequelize.define('KanjiStrokes', TABLE_DEFINETION, {})
@@ -16,8 +19,10 @@ module.exports = (sequelize, DataTypes) => {
         },
         order: [['stroke_no', 'DESC']]
       })
+      logger.info('getByKanji', `kanji=${kanji}`)
       return strokes
     } catch (error) {
+      logger.error('getByKanji', `kanji=${kanji}`, error)
       return null
     }
   }

@@ -27,6 +27,7 @@ export default {
       if (Q) {
         this.$emit('change-status', STATUS.MAIN)
       } else {
+        this.error = Q.message
         this.$emit('change-status', STATUS.UNKNOWN)
       }
     } catch (e) {

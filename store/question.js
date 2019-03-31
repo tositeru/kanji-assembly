@@ -68,12 +68,18 @@ export const actions = {
   // 日付から問題を取得する
   async query({ commit }, { date, dateId }) {
     const param = makeQuestionParam(date, dateId)
-    const res = await axios.post('/Q', param)
-    if (res.data === 'Bad') {
-      return null
+    try {
+      const res = await axios.post('/Q', param)
+      if (res.data === 'Bad') {
+        return null
+      }
+      commit('set', res.data)
+      return res.data
+    } catch (error) {
+      return {
+        message: error.response.data.message || '問題を取得できませんでした'
+      }
     }
-    commit('set', res.data)
-    return res.data
   },
 
   // 回答を送る
