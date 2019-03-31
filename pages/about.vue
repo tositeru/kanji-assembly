@@ -3,7 +3,7 @@
     v-layout()
       g-title()
     div(class="elevation-3")
-      v-tabs(color="cyan" dark slider-color="yellow")
+      v-tabs(color="cyan" dark slider-color="yellow"  show-arrows)
         v-tab(v-for="(tab, i) in tabList" :key="i" ripple) {{ tab.name }}
         v-tab-item()
           site()
