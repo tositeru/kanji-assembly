@@ -1,5 +1,4 @@
 const express = require('express')
-const consola = require('consola')
 const utils = require('../utils.js')
 const Logger = require('../../src/log')
 const {
@@ -153,7 +152,7 @@ router.post('/answer', async function(req, res) {
     date: req.body.date,
     dateId: req.body.dateId
   }
-  if (!param.date || !param.dateId) {
+  if (typeof param.date !== 'string' || typeof param.dateId !== 'number') {
     logError(req, `invalid parameter param=${JSON.stringify(param)}`)
     return res.status(400).json({
       messages: 'データ取得に失敗'
@@ -193,11 +192,29 @@ router.post('/answer', async function(req, res) {
 
 router.post('/openHint', async function(req, res) {
   // TODO Database check
+  const param = {
+    date: req.body.date,
+    dateId: req.body.dateId,
+    hintLevel: req.body.hintLevel
+  }
+  if (
+    typeof param.date !== 'string' ||
+    typeof param.dateId !== 'number' ||
+    typeof param.hintLevel !== 'number'
+  ) {
+    logError(req, `invalid parameter param=${JSON.stringify(param)}`)
+    return res.status(400).json({
+      messages: 'データ取得に失敗'
+    })
+  }
+
   try {
-    const Q = await Questions.getByDate(req.body.date, req.body.dateId)
-    const hint = await Hints.getByQuestionIDAndLevel(Q.id, req.body.hintLevel)
+    const Q = await Questions.getByDate(param.date, param.dateId)
+    const hint = await Hints.getByQuestionIDAndLevel(Q.id, param.hintLevel)
+    logInfo(req, 'OK')
     return res.send(hint.text)
   } catch (err) {
+    logError(req, err, param)
     return res.status(500).send('failed to get hint...')
   }
 })
@@ -205,13 +222,15 @@ router.post('/openHint', async function(req, res) {
 router.get('/getListInMonth', async function(req, res) {
   try {
     if (!req.query.month) {
+      logError(req, 'invalid parameters...', req.query.month)
       return res.status(400).send('failed to get question')
     }
-    consola.info(req.query.month)
     const questionDateList = await Questions.getQuestionListInMonth('2019-03')
+    logInfo(req, 'OK')
     return res.json(questionDateList)
   } catch (err) {
-    return res.statas(500).send('failed to get question list')
+    logError(req, err, req.query)
+    return res.status(500).send('failed to get question list')
   }
 })
 
