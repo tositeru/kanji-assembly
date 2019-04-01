@@ -24,7 +24,7 @@ switch (process.env.NODE_ENV) {
     const SSL_PATH = '/etc/letsencrypt/live/www.kanji-assembly.site/'
     server.https = {
       key: fs.readFileSync(path.resolve(SSL_PATH, 'privkey.pem')),
-      cert: fs.readFileSync(path.resolve(SSL_PATH, 'cerf.pem')),
+      cert: fs.readFileSync(path.resolve(SSL_PATH, 'cert.pem')),
       ca: [
         fs.readFileSync(path.resolve(SSL_PATH, 'chain.pem')),
         fs.readFileSync(path.resolve(SSL_PATH, 'fullchain.pem'))
