@@ -4,6 +4,26 @@ const bodyParser = require('body-parser')
 const ja = require('vuetify/es5/locale/ja')
 const pkg = require('./package')
 
+const server = {}
+switch (process.env.NODE_ENV) {
+  case 'development':
+    server.host = 'localhost'
+    server.port = 3000
+    server.https = {
+      key: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.key')),
+      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
+    }
+    break
+  case 'test':
+    server.host = 'localhost'
+    server.port = 3003
+    break
+  case 'production':
+    // server.host = 'kanji-assembly-236208.appspot.com'
+    // server.port = 443
+    break
+}
+
 module.exports = {
   mode: 'universal',
 
@@ -42,9 +62,8 @@ module.exports = {
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
     // Doc:https://github.com/nuxt-community/modules/tree/master/packages/bulma
-    '@nuxtjs/bulma',
-    '@nuxtjs/vuetify',
-    '@nuxtjs/pwa'
+    '@nuxtjs/vuetify'
+    // '@nuxtjs/pwa'
   ],
   /*
   ** Axios module configuration
@@ -90,13 +109,7 @@ module.exports = {
     }
   },
 
-  server: {
-    host: 'localhost',
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.key')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
-    }
-  },
+  server: server,
   serverMiddleware: [
     'redirect-ssl',
     bodyParser.json(),

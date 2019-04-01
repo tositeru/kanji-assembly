@@ -30,14 +30,7 @@ module.exports = async function startServer(nuxtConfig) {
   app.use(nuxt.render)
 
   // Listen the server
-  if (process.env.NODE_ENV === 'test') {
-    app.listen(3003, host)
-    consola.ready({
-      message: `For Running Test Version!! Server listening on http://${host}:3003`,
-      badge: true
-    })
-    return app
-  } else {
+  if (nuxt.options.server.https) {
     const server = https.createServer(nuxt.options.server.https, app)
     server.listen(port, host)
     consola.ready({
@@ -45,5 +38,12 @@ module.exports = async function startServer(nuxtConfig) {
       badge: true
     })
     return server
+  } else {
+    app.listen(port, host)
+    consola.ready({
+      message: `Server listening on http://${host}:${port}`,
+      badge: true
+    })
+    return app
   }
 }
