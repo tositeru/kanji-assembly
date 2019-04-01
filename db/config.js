@@ -10,7 +10,7 @@ const development = {
   username: 'wciantd',
   database: 'database_development',
   dialect: 'sqlite',
-  storage: 'db/database.db',
+  storage: 'db/database.dev.db',
   operatorsAliases: usedOperatorsAliases
 }
 const test = {
