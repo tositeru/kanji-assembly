@@ -4,6 +4,35 @@ const bodyParser = require('body-parser')
 const ja = require('vuetify/es5/locale/ja')
 const pkg = require('./package')
 
+const server = {}
+// HOSTとPORTは環境変数から変更できるようにしている
+switch (process.env.NODE_ENV) {
+  case 'development':
+    server.host = 'localhost'
+    server.port = 3000
+    server.https = {
+      key: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.key')),
+      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
+    }
+    break
+  case 'test':
+    server.host = 'localhost'
+    server.port = 3003
+    break
+  case 'production':
+    // あとでファイル名を確認する
+    const SSL_PATH = '/etc/letsencrypt/live/www.kanji-assembly/'
+    server.https = {
+      key: fs.readFileSync(path.resolve(SSL_PATH, 'key.pem')),
+      cert: fs.readFileSync(path.resolve(SSL_PATH, 'cerf.pem')),
+      ca: [
+        fs.readFileSync(path.resolve(SSL_PATH, 'chain.pem')),
+        fs.readFileSync(path.resolve(SSL_PATH, 'fullchain.pem'))
+      ]
+    }
+    break
+}
+
 module.exports = {
   mode: 'universal',
 
@@ -42,9 +71,8 @@ module.exports = {
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
     // Doc:https://github.com/nuxt-community/modules/tree/master/packages/bulma
-    '@nuxtjs/bulma',
-    '@nuxtjs/vuetify',
-    '@nuxtjs/pwa'
+    '@nuxtjs/vuetify'
+    // '@nuxtjs/pwa'
   ],
   /*
   ** Axios module configuration
@@ -90,13 +118,7 @@ module.exports = {
     }
   },
 
-  server: {
-    host: 'localhost',
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.key')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
-    }
-  },
+  server: server,
   serverMiddleware: [
     'redirect-ssl',
     bodyParser.json(),

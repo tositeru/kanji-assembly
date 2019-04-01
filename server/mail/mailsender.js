@@ -10,7 +10,7 @@ const logger = new Logger('Send Mail')
 let baseURL = 'https://localhost:3000'
 switch (process.env.NODE_ENV) {
   case 'production':
-    baseURL = 'https://'
+    baseURL = 'https://' + process.env.DOMAIN
     break
   default:
     baseURL = 'https://localhost:3000'

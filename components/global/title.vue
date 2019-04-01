@@ -2,7 +2,7 @@
   span
     v-hover
       h1(slot-scope="{ hover }" :class="`elevation-${hover ? 2 : 0}`")
-        span(@click="goToTopPage()") 漢字組み立てパズル
+        span(@click="goToTopPage()") 漢字組み立てパズル(β)
     slot
 </template>
 <script>

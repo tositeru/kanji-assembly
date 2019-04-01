@@ -100,9 +100,10 @@ module.exports = (sequelize, DataTypes) => {
     public: fs.readFileSync(
       path.resolve(__dirname, '../../ssl/auth-token/public.pub')
     ),
-    passphrase: fs.readFileSync(
-      path.resolve(__dirname, '../../ssl/auth-token/passphrase')
-    ),
+    passphrase: fs
+      .readFileSync(path.resolve(__dirname, '../../ssl/auth-token/passphrase'))
+      .toString()
+      .trim(),
     expiredSecond: 60 * 60 * 24 * 30
   }
 
