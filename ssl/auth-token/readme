@@ -4,5 +4,6 @@ private.pem
 public.pub
 
 openssl genrsa -out ssl/auth-token/private.key -aes256 4096
+echo <private-key-passphrase> > ssl/auth-token/passphrase
 openssl rsa -in ssl/auth-token/private.key -out ssl/auth-token/public.pub -pubout
 
