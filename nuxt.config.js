@@ -5,6 +5,7 @@ const ja = require('vuetify/es5/locale/ja')
 const pkg = require('./package')
 
 const server = {}
+// HOSTとPORTは環境変数から変更できるようにしている
 switch (process.env.NODE_ENV) {
   case 'development':
     server.host = 'localhost'
@@ -19,8 +20,16 @@ switch (process.env.NODE_ENV) {
     server.port = 3003
     break
   case 'production':
-    // server.host = 'kanji-assembly-236208.appspot.com'
-    // server.port = 443
+    // あとでファイル名を確認する
+    const SSL_PATH = '/etc/letsencrypt/live/www.kanji-assembly/'
+    server.https = {
+      key: fs.readFileSync(path.resolve(SSL_PATH, 'key.pem')),
+      cert: fs.readFileSync(path.resolve(SSL_PATH, 'cerf.pem')),
+      ca: [
+        fs.readFileSync(path.resolve(SSL_PATH, 'chain.pem')),
+        fs.readFileSync(path.resolve(SSL_PATH, 'fullchain.pem'))
+      ]
+    }
     break
 }
 
