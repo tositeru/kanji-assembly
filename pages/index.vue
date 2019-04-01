@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-container(fluid)
+  v-container()
     g-title(class="text-xs-center")
       div(v-if="!doLogin" class="login")
         n-link(to='/login') ログイン

@@ -44,6 +44,10 @@ zip pre-build -r .nuxt
 
 	 4. config HTTPS
       use let's encrypt!
+			取得するときはサーバーを閉じること
+			```bash
+			sudo certbot certonly
+			```
 
 	 5. build and start
 	    ```bash

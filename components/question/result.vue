@@ -1,7 +1,7 @@
 <template lang="pug">
   v-layout(align-center justify-space-between column fill-height)
-    v-flex(align-self-center)
-      v-sheet(color="grey lighten-3" height="40vh")
+    v-sheet(color="grey lighten-3" height="40vh" width="100%")
+      v-flex()
         div(v-if="corrected" class="display-3 text-xs-center result-text") 正解！
           div(class="body-2") やったね！
         div(v-else class="display-3 text-xs-center result-text") 不正解
