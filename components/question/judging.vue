@@ -1,4 +1,4 @@
-<template lang=pug>
+<template lang="pug">
   v-layout()
     v-flex(grop)
       v-sheet(color="grey lighten-3" height="50vh")

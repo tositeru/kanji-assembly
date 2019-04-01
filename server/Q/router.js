@@ -181,7 +181,9 @@ router.post('/answer', async function(req, res) {
     const answer = req.body.answers[0] || ''
     const isCorrect = QBody.answers.includes(answer)
     logInfo(req, 'OK')
-    return res.send(isCorrect ? 'OK' : 'NG')
+    return res.json({
+      isCorrect: isCorrect
+    })
   } catch (error) {
     logError(req, error, param)
     return res.status(500).json({

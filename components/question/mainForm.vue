@@ -11,7 +11,7 @@
     v-layout(column align-center)
         v-flex(grow)
             v-text-field(v-model="answer" :rules="answerRules" :counter="1" required label="回答" reverse class="text-xs-right")
-        v-flex(shrink)
+        v-flex(grow)
           div(v-if="question.corrected") 正解済み
             v-icon() check_circle
           v-btn(v-else class="btn-answer" @click="showSendDialog()" :disabled="!validAnswer") 送信

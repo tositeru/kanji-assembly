@@ -10,3 +10,8 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 arn.list
 sudo apt-get update && sudo apt-get install yarn
 
+# for sleep package
+sudo apt-get install build-essential
+# for sequelize
+sudo apt-get install sqlite3
+

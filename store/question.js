@@ -93,9 +93,12 @@ export const actions = {
     param.answers = answers
     try {
       const res = await axios.post('/Q/answer', param)
-      const result = res.status === 200
-      commit('setResult', result)
-      return result
+      if (res.data.isCorrect) {
+        const result = res.data.isCorrect
+        commit('setResult', result)
+        return result
+      }
+      return false
     } catch (error) {
       return false
     }
