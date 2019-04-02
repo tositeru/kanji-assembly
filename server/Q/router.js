@@ -227,7 +227,9 @@ router.get('/getListInMonth', async function(req, res) {
       logError(req, 'invalid parameters...', req.query.month)
       return res.status(400).send('failed to get question')
     }
-    const questionDateList = await Questions.getQuestionListInMonth('2019-03')
+    const questionDateList = await Questions.getQuestionListInMonth(
+      req.query.month
+    )
     logInfo(req, 'OK')
     return res.json(questionDateList)
   } catch (err) {

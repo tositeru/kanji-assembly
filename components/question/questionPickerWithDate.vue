@@ -23,6 +23,7 @@
         @input='startQuestionSelectFlow($event)'
         event-color="green lighten-1"
         :events="markColorOfDays"
+        :allowed-dates='setQuestionDates'
       )
         v-spacer()
         v-btn(flat color="primary" @click="menu = false") Cancel
@@ -81,12 +82,13 @@ function* generateQuestionSelectFlow(This, initialDate) {
   This.cancelToSelectQuestion()
 }
 
+const currentMoment = moment().format('YYYY-MM-DD')
 export default {
   data() {
     return {
       menu: null,
       selectQuestionIdDialog: false,
-      currentDate: '2019-03-01',
+      currentDate: currentMoment,
       prevDate: null,
       selectQuestionId: 1,
       currentQuestionIdList: [],
@@ -139,10 +141,10 @@ export default {
       })
     }
     const month = moment(this.currentDate).format('YYYY-MM')
-    this.questionList = await this.$store.dispatch(
-      'question/getListInMonth',
-      month
-    )
+    const result = await this.$store.dispatch('question/getListInMonth', month)
+    if (result.list) {
+      this.questionList = result.list
+    }
   },
   methods: {
     startQuestionSelectFlow(initialDate) {
@@ -173,6 +175,38 @@ export default {
       } else {
         return ['red']
       }
+    },
+    async setQuestionDates(date) {
+      const idList = this.questionList[date]
+      if (!idList) {
+        // データがなかったら、サーバーに問い合わせる。
+        // 選択している月が変更されたときのイベントが取得できなかったので、余分に前後の月のデータを取得している
+        try {
+          const resultPrev = await this.$store.dispatch(
+            'question/getListInMonth',
+            moment(date)
+              .subtract(1, 'months')
+              .format('YYYY-MM')
+          )
+          if (resultPrev.doRequested) {
+            Object.assign(this.questionList, resultPrev.list)
+          }
+          const resultNext = await this.$store.dispatch(
+            'question/getListInMonth',
+            moment(date)
+              .add(1, 'months')
+              .format('YYYY-MM')
+          )
+          if (resultNext.doRequested) {
+            Object.assign(this.questionList, resultNext.list)
+          }
+
+          return !!this.questionList[date]
+        } catch (error) {
+          return false
+        }
+      }
+      return true
     }
   }
 }
