@@ -70,3 +70,52 @@ $ yarn run generate
 ```
 
 For detailed explanation on how things work, checkout [Nuxt.js docs](https://nuxtjs.org).
+
+## 自動更新
+
+## cronを使う
+
+```shell
+# /etc/cron.d/letsencrypt
+sudo certbot renew && sudo systemctl restart kanji-assembly
+```
+
+## サーバー起動コマンドをデーモン化する
+
+cronでサーバーを再起動するにはサーバー起動コマンド関係をデーモン化する必要があるので作る。
+
+1. コマンドを作る
+2. systemctl用のファイルを作る
+		```
+		# /usr/lib/systemd/system/<daemon name>.service
+		[Unit]
+		Description = kanji assembly server
+		After=network-online.target
+
+		[Service]
+		Type=simple
+		ExecStart = <shell script path>
+		ExecStop = <shell script path>
+		Restart=always
+
+		[Install]
+		WantedBy=multi-user.target
+		```
+
+		※設定を書き換えるときは/etc/systemd/system/にコピーしてから変更すること
+
+3. 起動・無効化
+		sudo systemctl enable \<daemon name\>
+		sudo systemctl start \<daemon name\>
+
+		sudo systemctl stop \<daemon name\>
+
+		確認の仕方
+		```bash
+		sudo systemctl list-unit-files --type=service | grep <daemon name>
+		```
+		依存関係を調べる
+		```bash
+		systemctl list-dependencies
+		```
+
