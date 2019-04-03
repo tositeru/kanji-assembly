@@ -8,7 +8,7 @@
     div(class="Ad")
     question(:question-date="questionDate")
       div(class="vertical-centering") 今日の問題 その{{ questionId+1 }} 
-        span(class="select-question-dialog-btn") 他の問題は→
+        span(class="select-question-dialog-btn") 他は→
           v-icon(@click="selectQuestionIdDialog=true") list
       v-dialog(v-model="selectQuestionIdDialog" v-bind="getSelectQuestionIdDialogAttributes")
         v-card
@@ -20,7 +20,6 @@
                   | その{{ i+1 }}
           v-card-actions
               v-btn(@click="selectQuestionIdDialog=false") 戻る
-
 </template>
 
 <script>
@@ -65,6 +64,10 @@ export default {
   },
   beforeCreate() {
     this.questionDate = new QuestionDate(moment().format('YYYY-MM-DD'), 0)
+    this.$store.commit('question/setQuestionDate', {
+      date: this.questionDate.date,
+      dateId: 0
+    })
   },
   async mounted() {
     try {

@@ -28,8 +28,10 @@ module.exports = (sequelize, DataTypes) => {
   function getDateRange(date) {
     const start = moment.tz(`${date} 00:00:00`, 'Asia/Tokyo')
     let end = start.clone().add(1, 'month')
-    if (moment.tz('Asia/Tokyo').isBefore(end)) {
-      end = moment.tz('Asia/Tokyo')
+    if (!process.env.UNLIMIT_QUESTION_DATE) {
+      if (moment.tz('Asia/Tokyo').isBefore(end)) {
+        end = moment.tz('Asia/Tokyo')
+      }
     }
     return {
       start: start,
