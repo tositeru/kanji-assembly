@@ -14,6 +14,19 @@ const optionDefinitions = [
 
 const options = commandLineArgs(optionDefinitions)
 
+// NODE_ENV defaults 'development' for protect to a invalid operation.
+switch (options.database) {
+  case 'production':
+    process.env.NODE_ENV = 'production'
+    break
+  case 'test':
+    process.env.NODE_ENV = 'test'
+    break
+  default:
+    process.env.NODE_ENV = 'development'
+    break
+}
+
 const database = require('../db/database')
 const Questions = database.Questions
 const QuestionType1 = database.QuestionType1
@@ -67,19 +80,6 @@ if (options.all) {
 if (!options.files) {
   consola.info('please input files in Q/. ex) node Q/createQ <filepath> ...')
   return
-}
-
-// NODE_ENV defaults 'development' for protect to a invalid operation.
-switch (options.database) {
-  case 'production':
-    process.env.NODE_ENV = 'production'
-    break
-  case 'test':
-    process.env.NODE_ENV = 'test'
-    break
-  default:
-    process.env.NODE_ENV = 'development'
-    break
 }
 
 const utils = {
