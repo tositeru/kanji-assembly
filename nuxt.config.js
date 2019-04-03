@@ -33,6 +33,12 @@ switch (process.env.NODE_ENV) {
     break
 }
 
+const GoogleAdSenceInnerCode = `
+(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-3816961010765354',
+  enable_page_level_ads: true
+});`
+
 module.exports = {
   mode: 'universal',
 
@@ -46,7 +52,16 @@ module.exports = {
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { hid: 'description', name: 'description', content: pkg.description }
     ],
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    script: [
+      {
+        src: '//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+        async: true,
+        defer: true
+      },
+      { innerHTML: GoogleAdSenceInnerCode, type: 'text/javascript' }
+    ],
+    __dangerouslyDisableSanitizers: ['script']
   },
 
   /*
