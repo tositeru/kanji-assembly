@@ -1,14 +1,67 @@
 const path = require('path')
+const fs = require('fs')
 const consola = require('consola')
 const commandLineArgs = require('command-line-args')
 
 const optionDefinitions = [
   { name: 'files', type: String, multiple: true, defaultOption: true },
-  { name: 'database', alias: 'd', type: String },
-  { name: 'override', alias: 'o', type: Boolean }
+  { name: 'env', alias: 'e', type: String },
+  { name: 'override', alias: 'o', type: Boolean },
+  { name: 'all', alias: 'a', type: Boolean },
+  { name: 'deleteAll', alias: 'd', type: Boolean }
 ]
 
 const options = commandLineArgs(optionDefinitions)
+
+const database = require('../db/database')
+const Questions = database.Questions
+const QuestionType1 = database.QuestionType1
+const Hints = database.Hints
+const KanjiStrokes = database.KanjiStrokes
+
+if (options.deleteAll) {
+  const queryInterface = database.Sequelize.getQueryInterface()
+  const pred = async () => {
+    await Promise.all([
+      queryInterface.bulkDelete('Questions', null),
+      queryInterface.bulkDelete('QuestionType1s', null),
+      queryInterface.bulkDelete('Hints', null),
+      queryInterface.bulkDelete('KanjiStrokes', null)
+    ])
+    consola.success('complete delete all question and kanji.')
+  }
+  pred()
+  return
+}
+
+if (options.all) {
+  /**
+   * 指定したディレクトリにある.jsファイルを取得する
+   * @param {string} parentPath
+   */
+  const traverseFile = parentPath => {
+    for (const filepath of fs.readdirSync(parentPath)) {
+      const p = path.resolve(parentPath, filepath)
+      const stat = fs.statSync(p)
+      if (stat.isDirectory()) {
+        traverseFile(p)
+      } else if (filepath.search(/\.Q\.js$/) !== -1) {
+        options.files.push(p)
+      }
+    }
+  }
+
+  options.files = []
+  const root = fs.readdirSync(__dirname)
+  for (const dirPath of root) {
+    const p = path.resolve(__dirname, dirPath)
+    const stat = fs.statSync(p)
+    if (!stat.isDirectory()) {
+      continue
+    }
+    traverseFile(p)
+  }
+}
 
 if (!options.files) {
   consola.info('please input files in Q/. ex) node Q/createQ <filepath> ...')
@@ -27,12 +80,6 @@ switch (options.database) {
     process.env.NODE_ENV = 'development'
     break
 }
-
-const database = require('../db/database')
-const Questions = database.Questions
-const QuestionType1 = database.QuestionType1
-const Hints = database.Hints
-const KanjiStrokes = database.KanjiStrokes
 
 const utils = {
   /**
