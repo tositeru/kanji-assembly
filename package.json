@@ -18,7 +18,8 @@
     "open-database": "sqlite3 db/database.db",
     "db:create-model": "node_modules/.bin/sequelize model:create",
     "db:create-migration": "node_modules/.bin/sequelize migration:create",
-    "db:remake-seed": "cross-env NODE_ENV=development node_modules/.bin/sequelize db:seed:undo:all && cross-env NODE_ENV=development node_modules/.bin/sequelize db:seed:all"
+    "db:remake-seed": "cross-env NODE_ENV=development node_modules/.bin/sequelize db:seed:undo:all && cross-env NODE_ENV=development node_modules/.bin/sequelize db:seed:all",
+    "addQ": "node Q/createQ"
   },
   "dependencies": {
     "@nuxtjs/axios": "^5.3.6",
@@ -36,6 +37,7 @@
     "jsonwebtoken": "^8.5.0",
     "log4js": "^4.0.2",
     "moment": "^2.24.0",
+    "moment-timezone": "^0.5.23",
     "nodemailer": "^5.1.1",
     "nuxt": "^2.4.0",
     "path": "^0.12.7",
@@ -54,6 +56,7 @@
     "babel-eslint": "^8.2.1",
     "babel-preset-es2015": "^6.24.1",
     "browser-env": "^3.2.5",
+    "command-line-args": "^5.1.1",
     "eslint": "^5.0.1",
     "eslint-config-prettier": "^3.1.0",
     "eslint-config-standard": ">=12.0.0",
