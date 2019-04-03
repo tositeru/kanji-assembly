@@ -238,7 +238,14 @@ const utils = {
 
 async function main() {
   for (const src of options.files) {
-    const filepath = path.resolve(__dirname, src)
+    let filename = src
+    if (filename.search(/\.js$/) !== -1) {
+      filename = filename.replace(/\.js$/, '')
+    }
+    if (src.search(/\.Q$/) === -1) {
+      filename += '.Q'
+    }
+    const filepath = path.resolve(__dirname, filename)
     const questionFile = require(filepath)
 
     consola.log(filepath)
