@@ -37,7 +37,7 @@
                 | その{{ i+1 }}
         v-card-actions
             v-btn(@click="closeQuestionList()") 戻る
-    v-dialog(v-model="notifyNoneQuestionDialog" persistent min-width="50%")
+    v-dialog(v-model="notifyNoneQuestionDialog" persistent max-width="50%")
       v-card
         v-card-text(class="text-xs-center")
           | その日に問題はありません。
