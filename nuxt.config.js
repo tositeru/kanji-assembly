@@ -12,7 +12,8 @@ switch (process.env.NODE_ENV) {
     server.port = 3000
     server.https = {
       key: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.key')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt'))
+      cert: fs.readFileSync(path.resolve(__dirname, 'ssl/develop.crt')),
+      httpPort: 8080
     }
     break
   case 'test':
@@ -135,7 +136,6 @@ module.exports = {
 
   server: server,
   serverMiddleware: [
-    'redirect-ssl',
     bodyParser.json(),
     bodyParser.urlencoded({ extended: true }),
     '~/server/Q/router.js',

@@ -1,3 +1,4 @@
+const http = require('http')
 const https = require('https')
 const express = require('express')
 const consola = require('consola')
@@ -5,11 +6,6 @@ const { Nuxt, Builder } = require('nuxt')
 const app = express()
 
 module.exports = async function startServer(nuxtConfig) {
-  if (nuxtConfig.server.doRunTest) {
-    nuxtConfig.serverMiddleware = nuxtConfig.serverMiddleware.filter(
-      m => m !== 'redirect-ssl'
-    )
-  }
   // Init Nuxt.js
   const nuxt = new Nuxt(nuxtConfig)
 
@@ -37,6 +33,17 @@ module.exports = async function startServer(nuxtConfig) {
       message: `Server listening on https://${host}:${port}`,
       badge: true
     })
+    http
+      .createServer(
+        express().all('*', (req, res) => {
+          if (port === 443) {
+            res.redirect(`https://${req.hostname}${req.url}`)
+          } else {
+            res.redirect(`https://${req.hostname}:${port}${req.url}`)
+          }
+        })
+      )
+      .listen(nuxt.options.server.https.httpPort || 80)
     return server
   } else {
     app.listen(port, host)
