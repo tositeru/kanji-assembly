@@ -9,7 +9,7 @@
     "start-test-server": "cross-env NODE_ENV=test nodemon server/index.js --watch server --watch db",
     "test": "cross-env NODE_ENV=test node test-oreore/user.test.js",
     "lint": "eslint --fix --ext .js,.vue --ignore-path .gitignore .",
-    "dev": "cross-env NODE_ENV=development USE_TEST_MAIL=1 nodemon server/index.js --watch server --watch db",
+    "dev": "cross-env NODE_ENV=development USE_TEST_MAIL=1 UNLIMIT_QUESTION_DATE=1 nodemon server/index.js --watch server --watch db",
     "dev:mail": "cross-env NODE_ENV=development nodemon server/index.js --watch server --watch db",
     "generate": "nuxt generate",
     "precommit": "npm run lint",
