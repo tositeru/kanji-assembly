@@ -83,9 +83,10 @@ export default {
   methods: {
     selectQuestionId(id) {
       this.$store.commit('question/setQuestionDate', {
-        date: this.questionDate,
+        date: this.questionDate.date,
         dateId: id
       })
+      this.questionId = id
       this.selectQuestionIdDialog = false
     }
   }
