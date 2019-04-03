@@ -2,13 +2,13 @@
   div()
     v-layout(justify-space-between)
       v-flex(grow) {{ question.description }}
-        div (正解と異なる漢字を組み立てられたときは連絡いただけると助かります。Email: kanji.assembly@gmail.com)
       v-flex(shrink)
         v-btn(class="hint-button" @click="goToHint()") 助言
     v-sheet(color="grey lighten-3" height="50vh" style="overflow:scroll;")
       v-layout(class="strokes" align-center justify-space-around row fill-height wrap)
         div(v-for="(line, i) in question.lines" :key="i" class="stroke elevation-2" :style="`background-image: url(${getStrokeImage(line.kind)});`")
           | x{{line.count}}
+    div(class="text-xs-center") (正解と異なる漢字を組み立てられたときは連絡いただけると助かります。Email: kanji.assembly@gmail.com)
     v-layout(column align-center)
         v-flex(grow)
             v-text-field(v-model="answer" :rules="answerRules" :counter="1" required label="回答" reverse class="text-xs-right")
