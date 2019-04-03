@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 const consola = require('consola')
+const moment = require('moment-timezone')
 const commandLineArgs = require('command-line-args')
 
 const optionDefinitions = [
@@ -83,6 +84,19 @@ switch (options.database) {
 
 const utils = {
   /**
+   * ファイルパスに合わせた日にち生成する
+   * @param {string} filepath
+   */
+  getDate(filepath) {
+    const dateElement = filepath.match(/(\d{4})\/(\d{2})\/(\d{2})/)
+    return moment
+      .tz(
+        `${dateElement[1]}-${dateElement[2]}-${dateElement[3]} 00:00:00`,
+        'Asia/Tokyo'
+      )
+      .format()
+  },
+  /**
    * @param {object} question
    */
   async createQuestion(question) {
@@ -93,7 +107,8 @@ const utils = {
 
     let Q = await Questions.findOne({
       where: {
-        show_date: question.date
+        show_date: question.date,
+        date_id: question.dateId
       }
     })
     if (Q) {
