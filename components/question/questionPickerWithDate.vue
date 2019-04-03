@@ -11,7 +11,7 @@
           v-model="currentDate"
           :label="`選択中の問題 ${selectQuestionName}`"
           prepend-icon="event"
-          append-icon='event'
+          append-icon='list'
           @click:append="startQuestionSelectFlow(currentDate)"
           readonly
           max-width="50px"
@@ -27,20 +27,22 @@
       )
         v-spacer()
         v-btn(flat color="primary" @click="menu = false") Cancel
-      v-dialog(v-model="selectQuestionIdDialog" v-bind="getSelectQuestionIdDialogAttributes")
-        v-card
-          v-card-title(class="text-xs-center") 問題の選択
-          v-card-text()
-            v-layout(align-space-around justify-center fill-height class="select-question-id-layout")
-              v-flex(v-for="(id, i) in currentQuestionIdList" :key="i")
-                v-btn(@click="nextQuestionSelectFlow(i)" class="question-id-btn")
-                  | その{{ i+1 }}
-          v-card-actions
-              v-btn(@click="closeQuestionList()") 戻る
-        v-dialog(v-model="notifyNoneQuestionDialog" min-width="50%")
-          v-card
-            v-card-text(class="text-xs-center")
-              | その日に問題はありません。
+    v-dialog(v-model="selectQuestionIdDialog" v-bind="getSelectQuestionIdDialogAttributes")
+      v-card
+        v-card-title(class="text-xs-center") 問題の選択
+        v-card-text()
+          v-layout(align-space-around justify-center fill-height class="select-question-id-layout")
+            v-flex(v-for="(id, i) in currentQuestionIdList" :key="i")
+              v-btn(@click="nextQuestionSelectFlow(i)" class="question-id-btn")
+                | その{{ i+1 }}
+        v-card-actions
+            v-btn(@click="closeQuestionList()") 戻る
+    v-dialog(v-model="notifyNoneQuestionDialog" persistent min-width="50%")
+      v-card
+        v-card-text(class="text-xs-center")
+          | その日に問題はありません。
+        v-card-actions
+            v-btn(@click="cancelToSelectQuestion()") 戻る
 </template>
 <script>
 import moment from 'moment'
@@ -64,7 +66,6 @@ function* generateQuestionSelectFlow(This, initialDate) {
   // キャンセルしたときのための処理も含む
   This.currentQuestionIdList = questions
   This.selectQuestionIdDialog = true
-  This.prevDate = This.currentDate
   This.currentDate = initialDate
 
   // 指定した日にちの問題IDを取得
@@ -78,7 +79,7 @@ function* generateQuestionSelectFlow(This, initialDate) {
   })
 
   // 終了処理
-  This.prevDate = null
+  This.prevDate = This.currentDate
   This.cancelToSelectQuestion()
 }
 
@@ -89,7 +90,7 @@ export default {
       menu: null,
       selectQuestionIdDialog: false,
       currentDate: currentMoment,
-      prevDate: null,
+      prevDate: currentMoment,
       selectQuestionId: 1,
       currentQuestionIdList: [],
       questionList: {},
@@ -142,8 +143,9 @@ export default {
     }
     const month = moment(this.currentDate).format('YYYY-MM')
     const result = await this.$store.dispatch('question/getListInMonth', month)
-    if (result.list) {
-      this.questionList = result.list
+    if (result) {
+      this.questionList = result
+      this.questionList[month] = true
     }
   },
   methods: {
@@ -157,14 +159,12 @@ export default {
 
     closeQuestionList() {
       this.selectQuestionIdDialog = false
+      this.notifyNoneQuestionDialog = false
       this.questionSelectFlow = null
     },
     cancelToSelectQuestion() {
       this.menu = false
-      if (this.prevDate) {
-        this.currentDate = this.prevDate
-      }
-      this.prevDate = null
+      this.currentDate = this.prevDate
       this.closeQuestionList()
     },
 
@@ -177,28 +177,35 @@ export default {
       }
     },
     async setQuestionDates(date) {
-      const idList = this.questionList[date]
-      if (!idList) {
+      const day = date.split('-')[2]
+      if (day === '01') {
         // データがなかったら、サーバーに問い合わせる。
         // 選択している月が変更されたときのイベントが取得できなかったので、余分に前後の月のデータを取得している
+        // Vuetifyにちょうどよいイベントがなかったので、ここで行っている
+        // 既に読み込んでいたら読み込まないようにキャッシュしている。
         try {
-          const resultPrev = await this.$store.dispatch(
-            'question/getListInMonth',
-            moment(date)
-              .subtract(1, 'months')
-              .format('YYYY-MM')
-          )
-          if (resultPrev.doRequested) {
-            Object.assign(this.questionList, resultPrev.list)
+          const prevMonth = moment(date)
+            .subtract(1, 'months')
+            .format('YYYY-MM')
+          if (!this.questionList[prevMonth]) {
+            const resultPrev = await this.$store.dispatch(
+              'question/getListInMonth',
+              prevMonth
+            )
+            Object.assign(this.questionList, resultPrev)
+            this.questionList[prevMonth] = true
           }
-          const resultNext = await this.$store.dispatch(
-            'question/getListInMonth',
-            moment(date)
-              .add(1, 'months')
-              .format('YYYY-MM')
-          )
-          if (resultNext.doRequested) {
-            Object.assign(this.questionList, resultNext.list)
+
+          const nextMonth = moment(date)
+            .add(1, 'months')
+            .format('YYYY-MM')
+          if (!this.questionList[nextMonth]) {
+            const resultNext = await this.$store.dispatch(
+              'question/getListInMonth',
+              nextMonth
+            )
+            Object.assign(this.questionList, resultNext)
+            this.questionList[nextMonth] = true
           }
 
           return !!this.questionList[date]

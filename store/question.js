@@ -13,8 +13,7 @@ export const state = () => ({
     lines: [],
     hints: []
   },
-  answers: [],
-  hasQuestionLists: {}
+  answers: []
 })
 
 function makeEmptyQuestion() {
@@ -130,32 +129,16 @@ export const actions = {
   },
 
   async getListInMonth({ state, commit }, month) {
-    if (state.hasQuestionLists[month]) {
-      // 一回問い合わせていたら再び通信しないようにしている。
-      // これがないと大量のHTTPリクエストが一気発行されてPCが落ちる
-      return {
-        doRequested: false,
-        list: state.hasQuestionLists[month]
-      }
-    }
-    // データ受信待ち
-    state.hasQuestionLists[month] = {}
     try {
       const list = await axios.get('/Q/getListInMonth', {
         params: {
           month: month
         }
       })
-      return {
-        doRequested: true,
-        list: list.data
-      }
+      return list.data
     } catch (err) {
       consola.error(err)
-      return {
-        doRequested: false,
-        list: null
-      }
+      return null
     }
   }
 }

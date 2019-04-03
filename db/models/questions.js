@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Questions.getQuestionListInMonth = async month => {
     try {
-      const start = moment(month, 'YYYY-MM')
+      const start = moment.tz(`${month}-01 00:00:00`, 'Asia/Tokyo')
       const end = start.clone().add(1, 'month')
       const list = await Questions.findAll({
         where: {
