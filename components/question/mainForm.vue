@@ -1,8 +1,8 @@
 <template lang="pug">
   div()
-    v-layout(justify-space-between)
-      v-flex(grow) {{ question.description }}
-      v-flex(shrink)
+    v-layout(v-bind="getDescriptionLayoutAttributes")
+      v-flex(class="text-xs-center") {{ question.description }}
+      v-flex()
         v-btn(class="hint-button" @click="goToHint()") 助言
     v-sheet(color="grey lighten-3" height="50vh" style="overflow:scroll;")
       v-layout(class="strokes" align-center justify-space-around row fill-height wrap)
@@ -52,6 +52,20 @@ export default {
     },
     question() {
       return this.$store.state.question.currentQuestion
+    },
+    getDescriptionLayoutAttributes() {
+      switch (this.$vuetify.breakpoint.name) {
+        case 'xs':
+          return {
+            'justify-space-between': true,
+            'align-space-around': true,
+            column: true
+          }
+        default:
+          return {
+            'justify-space-between': true
+          }
+      }
     }
   },
   created() {
@@ -89,6 +103,7 @@ $breakpoint-xs: 600px;
 
 .hint-button {
   border-radius: 45%;
+  float: right;
 }
 
 .strokes {
