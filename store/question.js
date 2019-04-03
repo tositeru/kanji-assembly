@@ -51,6 +51,9 @@ export const mutations = {
   },
   setResult(state, isOk) {
     state.currentQuestion.corrected = isOk
+  },
+  appendQuestionList(state, { month, list }) {
+    state.hasQuestionLists[month] = list
   }
 }
 
@@ -135,7 +138,7 @@ export const actions = {
       return list.data
     } catch (err) {
       consola.error(err)
-      return false
+      return null
     }
   }
 }

@@ -2,6 +2,7 @@
   div()
     v-layout(justify-space-between)
       v-flex(grow) {{ question.description }}
+        div (正解と異なる漢字を組み立てられたときは連絡いただけると助かります。Email: kanji.assembly@gmail.com)
       v-flex(shrink)
         v-btn(class="hint-button" @click="goToHint()") 助言
     v-sheet(color="grey lighten-3" height="50vh" style="overflow:scroll;")

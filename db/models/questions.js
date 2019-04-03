@@ -1,5 +1,5 @@
 'use strict'
-const moment = require('moment')
+const moment = require('moment-timezone')
 const { TABLE_DEFINETION } = require('../tables/questions.js')
 const Logger = require('../../src/log')
 
@@ -21,11 +21,25 @@ module.exports = (sequelize, DataTypes) => {
   })
   Questions.associate = function(models) {}
 
+  /**
+   * get the date of today's earlier question
+   * @param {string} date YYYY-MM-DD
+   */
+  function getDateRange(date) {
+    const start = moment.tz(`${date} 00:00:00`, 'Asia/Tokyo')
+    let end = start.clone().add(1, 'month')
+    if (moment.tz('Asia/Tokyo').isBefore(end)) {
+      end = moment.tz('Asia/Tokyo')
+    }
+    return {
+      start: start,
+      end: end
+    }
+  }
+
   Questions.getByDate = async (date, dateId) => {
     try {
-      const start = moment(date)
-      const end = start.clone().add(1, 'day')
-
+      const { start, end } = getDateRange(date)
       logger.info('getByDate', `date=${date},dateId=${dateId}`)
       return await Questions.findOne({
         where: {
@@ -43,8 +57,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Questions.getQuestionListInMonth = async month => {
     try {
-      const start = moment(month, 'YYYY-MM')
-      const end = start.clone().add(1, 'month')
+      const { start, end } = getDateRange(`${month}-01`)
       const list = await Questions.findAll({
         where: {
           show_date: {
