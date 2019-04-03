@@ -15,7 +15,7 @@ const optionDefinitions = [
 const options = commandLineArgs(optionDefinitions)
 
 // NODE_ENV defaults 'development' for protect to a invalid operation.
-switch (options.database) {
+switch (options.env) {
   case 'production':
     process.env.NODE_ENV = 'production'
     break
