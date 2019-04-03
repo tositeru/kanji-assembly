@@ -1,5 +1,5 @@
 'use strict'
-const moment = require('moment')
+const moment = require('moment-timezone')
 const { TABLE_DEFINETION } = require('../tables/questions.js')
 const Logger = require('../../src/log')
 
@@ -23,9 +23,8 @@ module.exports = (sequelize, DataTypes) => {
 
   Questions.getByDate = async (date, dateId) => {
     try {
-      const start = moment(date)
+      const start = moment.tz(`${date} 00:00:00`, 'Asia/Tokyo')
       const end = start.clone().add(1, 'day')
-
       logger.info('getByDate', `date=${date},dateId=${dateId}`)
       return await Questions.findOne({
         where: {
