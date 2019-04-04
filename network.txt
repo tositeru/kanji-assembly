@@ -1,0 +1,17 @@
+network.trr.mode
+    0 : TRR無効(既定値)．
+    1 : 通常のDNSとTRRを並行実行して最初に帰ってきた結果を利用する．
+    2 : TRRを優先利用．
+    3 : TRRのみを利用．
+    4 : 通常のDNSを利用する．TRRは情報収集のためだけに動く．
+    5 : TRRを明示的に無効にする
+
+network.trr.uri
+    https://dns.cloudflare.com/.well-known/dns (Cloudflare)
+    https://dns.google.com/experimental (Google)
+    https://doh.cleanbrowsing.org/doh/secure-filter/ (CleanBrowsing のセキュリティ向けフィルタ)
+    https://doh.cleanbrowsing.org/doh/family-filter/ (CleanBrowsing のファミリー向けフィルタ)
+    https://doh.cleanbrowsing.org/doh/adult-filter/ (CleanBrowsing のアダルトコンテンツフィルタ)
+	https://mozilla.cloudflare-dns.com/dns-query
+
+about:networking#dns 
