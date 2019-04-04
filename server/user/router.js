@@ -1,5 +1,4 @@
 const express = require('express')
-const log4js = require('log4js')
 const cookieparser = require('cookieparser')
 const utils = require('../utils.js')
 const MailSender = require('../mail/mailsender')
@@ -11,8 +10,6 @@ const Datatype = require('./defineDatatypes')
 
 const router = express.Router()
 const app = express()
-
-app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }))
 
 router.use((req, res, next) => {
   Object.setPrototypeOf(req, app.request)
