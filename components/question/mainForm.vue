@@ -1,7 +1,7 @@
 <template lang="pug">
   div()
     v-layout(v-bind="getDescriptionLayoutAttributes")
-      v-flex(class="text-xs-center") {{ question.description }}
+      v-flex(class="text-xs-center description") {{ question.description }}
       v-flex()
         v-btn(class="hint-button" @click="goToHint()") 助言
     v-sheet(color="grey lighten-3" height="50vh" style="overflow:scroll;")
@@ -121,6 +121,10 @@ $breakpoint-xs: 600px;
     width: 70px;
     height: 70px;
   }
+}
+
+.description {
+  white-space: pre-line;
 }
 
 .btn-answer {
