@@ -53,6 +53,13 @@ zip pre-build -r .nuxt
 	    ```bash
  			yarn start
 			```
+	4. config auto tweet for question
+      今日の問題を自動でツィートするためにcronを設定する
+			```bash
+			sudo crontab kanji-assembly-cron
+			# twitter用のAPIキーを書く
+			sudo crontab -e
+			```
 
 ``` bash
 # install dependencies

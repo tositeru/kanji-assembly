@@ -98,7 +98,10 @@ const { questionPath, year, month, day } = getQuestionFilePathAndDate(
 const question = require(questionPath)
 
 function tweetQuestion(question, year, month, day, part) {
-  const imageFilepath = `Q/${year}/${month}/images/${year}-${month}-${day} part${part}.png`
+  const imageFilepath = path.resolve(
+    __dirname,
+    `${year}/${month}/images/${year}-${month}-${day} part${part}.png`
+  )
   const image = fs.readFileSync(imageFilepath)
   tweet(question, part, image)
 }
