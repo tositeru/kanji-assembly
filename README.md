@@ -60,6 +60,10 @@ zip pre-build -r .nuxt
 			# twitter用のAPIキーを書く
 			sudo crontab -e
 			```
+			タイムゾーンを変更したときはcronデーモンを再起動することを忘れない
+			```bash
+			sudo systemctl restart cron.service
+			```
 
 ``` bash
 # install dependencies
