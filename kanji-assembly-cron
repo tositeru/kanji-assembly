@@ -3,6 +3,6 @@ TWITTER_CONSUMER_SECRET=pleaseinputkey
 TWITTER_ACCESS_TOKEN_KEY=pleaseinputkey
 TWITTER_ACCESS_TOKEN_SECRET=pleaseinputkey
 MAILTO='kanji.assembly@gmail.com'
-20 6 * * * /usr/bin/node ~/apps/kanji-assembly/Q/tweetQ -v -p 1 > ~/apps/kanji-assembly/cron.log 2>&1
-20 12 * * * /usr/bin/node ~/apps/kanji-assembly/Q/tweetQ -v -p 2 > ~/apps/kanji-assembly/cron.log 2>&1
-20 18 * * * /usr/bin/node ~/apps/kanji-assembly/Q/tweetQ -v -p 3 > ~/apps/kanji-assembly/cron.log 2>&1
+20 6 * * * /usr/bin/node ~/kanji-assembly/Q/tweetQ -p 1 > ~/kanji-assembly/cron.log 2>&1
+20 12 * * * /usr/bin/node ~/kanji-assembly/Q/tweetQ -p 2 > ~/kanji-assembly/cron.log 2>&1
+20 18 * * * /usr/bin/node ~/kanji-assembly/Q/tweetQ -p 3 > ~/kanji-assembly/cron.log 2>&1
