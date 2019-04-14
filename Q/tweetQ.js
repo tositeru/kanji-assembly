@@ -13,29 +13,34 @@ const optionDefinitions = [
 
 const options = commandLineArgs(optionDefinitions)
 
-if (!process.env.TWITTER_CONSUMER_KEY) {
-  consola.error('please set TWITTER_CONSUMER_KEY enviroment variable...')
-  return 1
-}
-if (!process.env.TWITTER_CONSUMER_SECRET) {
-  consola.error('please set TWITTER_CONSUMER_SECRET enviroment variable...')
-  return 1
-}
-if (!process.env.TWITTER_ACCESS_TOKEN_KEY) {
-  consola.error('please set TWITTER_ACCESS_TOKEN_KEY enviroment variable...')
-  return 1
-}
-if (!process.env.TWITTER_ACCESS_TOKEN_SECRET) {
-  consola.error('please set TWITTER_ACCESS_TOKEN_SECRET enviroment variable...')
-  return 1
-}
+let client = null
+if (!options.validate) {
+  if (!process.env.TWITTER_CONSUMER_KEY) {
+    consola.error('please set TWITTER_CONSUMER_KEY enviroment variable...')
+    return 1
+  }
+  if (!process.env.TWITTER_CONSUMER_SECRET) {
+    consola.error('please set TWITTER_CONSUMER_SECRET enviroment variable...')
+    return 1
+  }
+  if (!process.env.TWITTER_ACCESS_TOKEN_KEY) {
+    consola.error('please set TWITTER_ACCESS_TOKEN_KEY enviroment variable...')
+    return 1
+  }
+  if (!process.env.TWITTER_ACCESS_TOKEN_SECRET) {
+    consola.error(
+      'please set TWITTER_ACCESS_TOKEN_SECRET enviroment variable...'
+    )
+    return 1
+  }
 
-const client = new Twitter({
-  consumer_key: process.env.TWITTER_CONSUMER_KEY,
-  consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-  access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
-  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-})
+  client = new Twitter({
+    consumer_key: process.env.TWITTER_CONSUMER_KEY,
+    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+    access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+  })
+}
 
 async function tweet(question, no, image) {
   try {
@@ -102,7 +107,7 @@ function tweetQuestion(question, year, month, day, part) {
     __dirname,
     `${year}/${month}/images/${year}-${month}-${day} part${part}.png`
   )
-  const image = fs.readFileSync(imageFilepath)
+  const image = options.validate ? null : fs.readFileSync(imageFilepath)
   tweet(question, part, image)
 }
 
