@@ -108,6 +108,13 @@ function tweetQuestion(question, year, month, day, part) {
     `${year}/${month}/images/${year}-${month}-${day} part${part}.png`
   )
   const image = options.validate ? null : fs.readFileSync(imageFilepath)
+  if (options.validate) {
+    if (!fs.existsSync(imageFilepath)) {
+      consola.error(
+        `Don't exsit question image for tweets. image=${imageFilepath}`
+      )
+    }
+  }
   tweet(question, part, image)
 }
 
